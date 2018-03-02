@@ -1,0 +1,9 @@
+# Python
+*.pyc
+*__pycache__
+
+# Custom
+*.swp
+slurm-*.out
+.ipynb_checkpoints
+timit/*
