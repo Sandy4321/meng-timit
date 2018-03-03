@@ -25,7 +25,7 @@ export UTILS=$MENG_ROOT/utils
 # Change to env-cpu if running just on CPU
 export TRAIN_ENV=env-gpu     
 export AUGMENT_ENV=env-gpu
-export PHONES_ENV=env-cpu
+export KALDI_ENV=env-kaldi
 
 export PATH=$PATH:$FEATBIN
 
