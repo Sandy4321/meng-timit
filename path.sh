@@ -11,6 +11,8 @@ export FEATBIN=$KALDI_ROOT/src/featbin
 export SCRATCH=/data/sls/scratch/atitus5/meng
 mkdir -p $SCRATCH
 
+export TIMIT_ROOT=/data/sls/static/timit/by_speaker
+
 export MODELS=$SCRATCH/models
 mkdir -p $MODELS
 export LOGS=$SCRATCH/logs
@@ -18,8 +20,10 @@ mkdir -p $LOGS
 export AUGMENTED_DATA=$SCRATCH/augmented_data
 mkdir -p $AUGMENTED_DATA
 
-export FEATS=$MENG_ROOT
-export TEST_FEATS=$MENG_ROOT/test_feats
+export FEATS=$SCRATCH/feats
+mkdir -p $FEATS
+
+export STEPS=$MENG_ROOT/steps
 export UTILS=$MENG_ROOT/utils
 
 # Change to env-cpu if running just on CPU

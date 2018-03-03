@@ -976,33 +976,12 @@ Decoding done.
 ============================================================================
                     System Combination (DNN+SGMM)                         
 ============================================================================
-============================================================================
-               DNN Hybrid Training & Decoding (Karel's recipe)            
-============================================================================
-steps/nnet/make_fmllr_feats.sh --nj 10 --cmd run.pl --transform-dir exp/tri3/decode_test data-fmllr-tri3/test data/test exp/tri3 data-fmllr-tri3/test/log data-fmllr-tri3/test/data
-steps/nnet/make_fmllr_feats.sh: feature type is lda_fmllr
-utils/copy_data_dir.sh: copied data from data/test to data-fmllr-tri3/test
-utils/validate_data_dir.sh: Successfully validated data-directory data-fmllr-tri3/test
-steps/nnet/make_fmllr_feats.sh: Done!, type lda_fmllr, data/test --> data-fmllr-tri3/test, using : raw-trans None, gmm exp/tri3, trans exp/tri3/decode_test
-steps/nnet/make_fmllr_feats.sh --nj 10 --cmd run.pl --transform-dir exp/tri3/decode_dev data-fmllr-tri3/dev data/dev exp/tri3 data-fmllr-tri3/dev/log data-fmllr-tri3/dev/data
-steps/nnet/make_fmllr_feats.sh: feature type is lda_fmllr
-utils/copy_data_dir.sh: copied data from data/dev to data-fmllr-tri3/dev
-utils/validate_data_dir.sh: Successfully validated data-directory data-fmllr-tri3/dev
-steps/nnet/make_fmllr_feats.sh: Done!, type lda_fmllr, data/dev --> data-fmllr-tri3/dev, using : raw-trans None, gmm exp/tri3, trans exp/tri3/decode_dev
-steps/nnet/make_fmllr_feats.sh --nj 10 --cmd run.pl --transform-dir exp/tri3_ali data-fmllr-tri3/train data/train exp/tri3 data-fmllr-tri3/train/log data-fmllr-tri3/train/data
-steps/nnet/make_fmllr_feats.sh: feature type is lda_fmllr
-utils/copy_data_dir.sh: copied data from data/train to data-fmllr-tri3/train
-utils/validate_data_dir.sh: Successfully validated data-directory data-fmllr-tri3/train
-steps/nnet/make_fmllr_feats.sh: Done!, type lda_fmllr, data/train --> data-fmllr-tri3/train, using : raw-trans None, gmm exp/tri3, trans exp/tri3_ali
-utils/subset_data_dir_tr_cv.sh data-fmllr-tri3/train data-fmllr-tri3/train_tr90 data-fmllr-tri3/train_cv10
-/data/sls/r/u/atitus5/meng-timit/recipe/utils/subset_data_dir.sh: reducing #utt from 3696 to 3320
-/data/sls/r/u/atitus5/meng-timit/recipe/utils/subset_data_dir.sh: reducing #utt from 3696 to 376
-local/nnet/run_dnn.sh: line 56: exp/dnn4_pretrain-dbn/log/pretrain_dbn.log: No such file or directory
+
 %WER 31.9 | 400 15057 | 72.1 19.9 8.0 4.0 31.9 100.0 | -0.802 | exp/mono/decode_dev/score_4/ctm_39phn.filt.sys
 %WER 24.6 | 400 15057 | 79.4 15.5 5.0 4.1 24.6 99.5 | -0.142 | exp/tri1/decode_dev/score_10/ctm_39phn.filt.sys
 %WER 23.0 | 400 15057 | 80.6 14.4 5.0 3.6 23.0 99.5 | -0.238 | exp/tri2/decode_dev/score_10/ctm_39phn.filt.sys
 %WER 20.0 | 400 15057 | 83.0 12.5 4.5 3.0 20.0 99.3 | -0.581 | exp/tri3/decode_dev/score_10/ctm_39phn.filt.sys
-%WER 23.3 | 400 15057 | 80.0 14.8 5.2 3.3 23.3 99.8 | -0.169 | exp/tri3/decode_dev.si/score_10/ctm_39phn.filt.sys
+%:ER 23.3 | 400 15057 | 80.0 14.8 5.2 3.3 23.3 99.8 | -0.169 | exp/tri3/decode_dev.si/score_10/ctm_39phn.filt.sys
 %WER 20.8 | 400 15057 | 82.1 12.5 5.4 2.9 20.8 99.8 | -0.543 | exp/tri4_nnet/decode_dev/score_5/ctm_39phn.filt.sys
 %WER 18.0 | 400 15057 | 84.4 11.1 4.5 2.4 18.0 99.3 | -0.151 | exp/sgmm2_4/decode_dev/score_10/ctm_39phn.filt.sys
 %WER 18.0 | 400 15057 | 84.9 11.2 4.0 2.9 18.0 99.0 | -0.203 | exp/sgmm2_4_mmi_b0.1/decode_dev_it1/score_9/ctm_39phn.filt.sys
