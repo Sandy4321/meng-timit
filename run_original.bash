@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32768
 #SBATCH --time=48:00:00
-#SBATCH -J build_kaldi_cuda
+#SBATCH -J timit_kaldi
 #SBATCH --exclude=sls-sm-5
 
 . ./path.sh
@@ -16,9 +16,5 @@ export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/li
 source activate $KALDI_ENV
 echo "Environment set up."
 
-cd $KALDI_ROOT/src
-./configure --shared --use-cuda
-make depend -j 30 
-make -j 30 
-
-echo "Done building Kaldi with CUDA support"
+cd original_recipe
+./run.sh

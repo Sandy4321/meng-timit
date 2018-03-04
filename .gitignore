@@ -8,4 +8,5 @@ slurm-*.out
 .ipynb_checkpoints
 timit/*
 
-recipe
+original_recipe
+recipes
