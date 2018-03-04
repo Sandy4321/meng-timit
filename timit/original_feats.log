@@ -12,16 +12,16 @@ Done creating utt2spk file.
 Creating spk2utt...
 Done creating spk2utt file.
 Extracting filter bank features...
-/data/sls/r/u/atitus5/meng-timit/steps/make_fbank.sh --cmd /data/sls/r/u/atitus5/meng-timit/utils/run.pl --nj 30 --fbank-config /data/sls/r/u/atitus5/meng-timit/timit/fbank.conf /data/sls/scratch/atitus5/meng/feats
-/data/sls/r/u/atitus5/meng-timit/utils/validate_data_dir.sh: Successfully validated data-directory /data/sls/scratch/atitus5/meng/feats
+/data/sls/r/u/atitus5/meng-timit/steps/make_fbank.sh --cmd /data/sls/r/u/atitus5/meng-timit/utils/run.pl --nj 30 --fbank-config /data/sls/r/u/atitus5/meng-timit/timit/fbank.conf /data/sls/scratch/atitus5/meng/feats/timit
+/data/sls/r/u/atitus5/meng-timit/utils/validate_data_dir.sh: Successfully validated data-directory /data/sls/scratch/atitus5/meng/feats/timit
 /data/sls/r/u/atitus5/meng-timit/steps/make_fbank.sh: [info]: no segments file exists: assuming wav.scp indexed by utterance.
 It seems not all of the feature files were successfully (6307 != 6308);
-consider using utils/fix_data_dir.sh /data/sls/scratch/atitus5/meng/feats
-Succeeded creating filterbank features for feats
+consider using utils/fix_data_dir.sh /data/sls/scratch/atitus5/meng/feats/timit
+Succeeded creating filterbank features for timit
 Done extracting filter bank features.
 Cleaning up any issues...
 fix_data_dir.sh: kept 6307 utterances out of 6308
-fix_data_dir.sh: old files are kept in /data/sls/scratch/atitus5/meng/feats/.backup
+fix_data_dir.sh: old files are kept in /data/sls/scratch/atitus5/meng/feats/timit/.backup
 Done cleaning up.
 Computing CMVN stats...
 Done computing CMVN stats.

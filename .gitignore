@@ -9,3 +9,4 @@ slurm-*.out
 
 original_recipe
 recipes
+*.wav

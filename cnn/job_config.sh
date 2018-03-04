@@ -1,4 +1,4 @@
-export FEAT_DIM=20      # 20 MFCCs
+export FEAT_DIM=40      # 40-dim Mel filter bank
 export LEFT_CONTEXT=7
 export RIGHT_CONTEXT=7
 export OPTIMIZER=Adam
