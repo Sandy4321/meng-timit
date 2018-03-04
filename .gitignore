@@ -6,7 +6,6 @@
 *.swp
 slurm-*.out
 .ipynb_checkpoints
-timit/*
 
 original_recipe
 recipes
