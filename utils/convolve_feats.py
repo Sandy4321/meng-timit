@@ -12,11 +12,15 @@ wav_dir = sys.argv[3]
 
 import os
 import random
-random.seed(1)  # Deterministic for debugging
 import subprocess as sp
 
 import numpy as np
 import scipy.io.wavfile as wavfile
+
+debug = False
+if debug:
+    print("Running in debug mode (assertion checks; fixed random seed)", flush=True)
+    random.seed(1)  # Deterministic for debugging
 
 def pcmToFloat(wav_data):
     if wav_data.dtype == np.int32 or wav_data.dtype == np.int16:
@@ -92,9 +96,12 @@ with open(os.path.join(data_dir, "wav.scp"), 'w') as wav_scp:
             # print("Read in %d frames of WAV data (F_s: %d)" % (wav_data_float.shape[0], fs), flush=True)
 
             # Convolve WAV data with randomly chosen RIR
+            # Perform full convolution and then chop off end effects, so that the output result
+            # is same length as original WAV and is time-aligned to it (still contains edge
+            # effects at beginning, though)
             rir_idx = random.randint(0, len(rirs) - 1)
             current_rir = rirs[rir_idx]
-            convolved_wav_float = np.convolve(wav_data_float, current_rir, mode='same')
+            convolved_wav_float = np.convolve(wav_data_float, current_rir, mode='full')[:len(wav_data_float)]
 
             # Handle clipping
             clip_factor = 1.1   # Can be hand-tuned; however, must be strictly > 1
@@ -104,12 +111,11 @@ with open(os.path.join(data_dir, "wav.scp"), 'w') as wav_scp:
             output_type = np.int16
             convolved_wav_pcm = floatToPCM(convolved_wav_float, dtype=output_type)
 
-            '''
-            # Sanity check for clipping
-            range_info = np.iinfo(output_type)
-            assert(max(convolved_wav_pcm) < range_info.max)
-            assert(min(convolved_wav_pcm) > range_info.min)
-            '''
+            if debug:
+                # Sanity check for clipping
+                range_info = np.iinfo(output_type)
+                assert(max(convolved_wav_pcm) < range_info.max)
+                assert(min(convolved_wav_pcm) > range_info.min)
 
             # Write convolved WAV file
             utt_id = line.split(" ")[0]   # Just use same utterance ID as original for now
