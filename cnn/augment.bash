@@ -64,6 +64,6 @@ else
     mkdir -p $AUGMENTED_DATA_DIR/${run_mode}_ratio${NOISE_RATIO}
 fi
 
-python3 cnn/scripts/augment_md.py ${run_mode} ${domain_adversarial} ${gan} > $augment_log
+python3 cnn/scripts/augment_md.py ${run_mode} ${domain_adversarial} ${gan} &> $augment_log
 
 echo "DONE MULTIDECODER DATA AUGMENTATION JOB"

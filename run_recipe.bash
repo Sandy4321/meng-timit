@@ -36,6 +36,6 @@ source activate $KALDI_ENV
 echo "Environment set up."
 
 cd recipes/$recipe_name
-./run.sh > $recipe_log
+./run.sh &> $recipe_log
 
 echo "Done running recipe $recipe_name"

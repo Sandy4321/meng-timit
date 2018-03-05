@@ -19,6 +19,8 @@ export LOGS=$SCRATCH/logs
 mkdir -p $LOGS
 export AUGMENTED_DATA=$SCRATCH/augmented_data
 mkdir -p $AUGMENTED_DATA
+export CONVOLVED_DATA=$SCRATCH/convolved_data
+mkdir -p $CONVOLVED_DATA
 export RIRS=$SCRATCH/rirs
 mkdir -p $RIRS
 export FEATS=$SCRATCH/feats

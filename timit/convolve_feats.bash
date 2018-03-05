@@ -12,13 +12,13 @@ echo "STARTING CONVOLUTION JOB"
 . ./path.sh
 
 if [ $# -ne 1 ]; then
-    echo "Must specify recipe name"
+    echo "Must specify dataset name"
     exit 1
 fi
-recipe_name=$1
+dataset_name=$1
 
-if [ ! -d recipes/$recipe_name ]; then
-    echo "Recipe name $recipe_name does not exist in recipes/"
+if [ ! -d $CONVOLVED_DATA/$dataset_name ]; then
+    echo "Dataset name $dataset_name does not exist in $CONVOLVED_DATA"
     exit 1
 fi
 
@@ -27,17 +27,17 @@ export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/li
 source activate $KALDI_ENV
 echo "Environment set up."
 
-recipe_dir=$LOGS/recipes/$recipe_name
-mkdir -p $recipe_dir
+dataset_dir=$LOGS/convolved_data/$dataset_name
+mkdir -p $dataset_dir
 
-data_prep_log=$recipe_dir/convolve_feats.log
+data_prep_log=$dataset_dir/convolve_feats.log
 if [ -f $data_prep_log ]; then
     # Move old log
-    mv $data_prep_log $recipe_dir/convolve_feats-$(date +"%F_%T%z").log
+    mv $data_prep_log $dataset_dir/convolve_feats-$(date +"%F_%T%z").log
 fi
 
 echo "Convolving data..."
-$MENG_ROOT/timit/convolve_feats.sh $recipe_name > $data_prep_log
+$MENG_ROOT/timit/convolve_feats.sh $dataset_name &> $data_prep_log
 echo "Done convolving data!"
 
 echo "DONE CONVOLUTION JOB"

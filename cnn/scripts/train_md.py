@@ -107,19 +107,16 @@ def run_training(run_mode, domain_adversarial, gan):
     learning_rate = float(os.environ["LEARNING_RATE"])
     on_gpu = torch.cuda.is_available()
 
-    val_batch_count = int(os.environ["VAL_BATCH_COUNT"])
-    log_interval = val_batch_count // 10 if val_batch_count >= 10 else val_batch_count
-
     # Set up data files
     training_scps = dict()
     for decoder_class in decoder_classes:
-        training_scp_name = os.path.join(os.environ["CURRENT_FEATS"], "%s-train-norm.blogmel.scp" % decoder_class)
+        training_scp_name = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "train.scp")
         training_scps[decoder_class] = training_scp_name
 
-    val_scps = dict()
+    dev_scps = dict()
     for decoder_class in decoder_classes:
-        val_scp_name = os.path.join(os.environ["CURRENT_FEATS"], "%s-val-norm.blogmel.scp" % decoder_class)
-        val_scps[decoder_class] = val_scp_name
+        dev_scp_name = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "dev.scp")
+        dev_scps[decoder_class] = dev_scp_name
 
     # Fix random seed for debugging
     torch.manual_seed(1)
@@ -289,6 +286,7 @@ def run_training(run_mode, domain_adversarial, gan):
     print("Setting up training datasets...", flush=True)
     training_datasets = dict()
     training_loaders = dict()
+    print(training_scps, flush=True)
     for decoder_class in decoder_classes:
         current_dataset = KaldiDataset(training_scps[decoder_class],
                                      left_context=left_context,
@@ -305,22 +303,22 @@ def run_training(run_mode, domain_adversarial, gan):
                                                                         decoder_class),
               flush=True)
 
-    print("Setting up val datasets...", flush=True)
-    val_datasets = dict()
-    val_loaders = dict()
+    print("Setting up dev datasets...", flush=True)
+    dev_datasets = dict()
+    dev_loaders = dict()
     for decoder_class in decoder_classes:
-        current_dataset = KaldiDataset(val_scps[decoder_class],
+        current_dataset = KaldiDataset(dev_scps[decoder_class],
                                      left_context=left_context,
                                      right_context=right_context,
                                      shuffle_utts=True,
                                      shuffle_feats=True)
-        val_datasets[decoder_class] = current_dataset
-        val_loaders[decoder_class] = DataLoader(current_dataset,
+        dev_datasets[decoder_class] = current_dataset
+        dev_loaders[decoder_class] = DataLoader(current_dataset,
                                                 batch_size=batch_size,
                                                 shuffle=False,
                                                 **loader_kwargs)
-        print("Using %d val features (%d batches) for class %s" % (len(current_dataset),
-                                                                   len(val_loaders[decoder_class]),
+        print("Using %d dev features (%d batches) for class %s" % (len(current_dataset),
+                                                                   len(dev_loaders[decoder_class]),
                                                                    decoder_class),
               flush=True)
 
@@ -328,19 +326,21 @@ def run_training(run_mode, domain_adversarial, gan):
     print("Setting up minibatch shuffling for training...", flush=True)
     train_batch_counts = dict()
     train_element_counts = dict()
-    val_batch_counts = dict()
-    val_element_counts = dict()
+    dev_batch_counts = dict()
+    dev_element_counts = dict()
 
     total_train_batches = float('inf')
 
     for decoder_class in decoder_classes:
         train_batch_counts[decoder_class] = len(training_loaders[decoder_class])
         train_element_counts[decoder_class] = len(training_datasets[decoder_class])
-        val_batch_counts[decoder_class] = len(val_loaders[decoder_class])
-        val_element_counts[decoder_class] = len(val_datasets[decoder_class])
+        dev_batch_counts[decoder_class] = len(dev_loaders[decoder_class])
+        dev_element_counts[decoder_class] = len(dev_datasets[decoder_class])
 
         # If datasets mismatch in size, use the smaller of the two
         total_train_batches = min(train_batch_counts[decoder_class], total_train_batches)
+
+    log_interval = total_train_batches // 10
         
     print("%d total batches: %s" % (total_train_batches, str(train_batch_counts)), flush=True)
 
@@ -369,7 +369,9 @@ def run_training(run_mode, domain_adversarial, gan):
 
 
 
-    def train(epoch, iteration, training_iterators, batch_count=10000):
+    def train(epoch):
+        training_iterators = {decoder_class: iter(training_loaders[decoder_class]) for decoder_class in decoder_classes}
+
         decoder_class_losses = {}
         for decoder_class in decoder_classes:
             decoder_class_losses[decoder_class] = {}
@@ -391,7 +393,7 @@ def run_training(run_mode, domain_adversarial, gan):
         batches_processed = 0
         class_elements_processed = {decoder_class: 0 for decoder_class in decoder_classes}
 
-        while batches_processed < batch_count:
+        while batches_processed < total_train_batches:
             # Get data for each decoder class
             feat_dict = dict()
             targets_dict = dict()
@@ -649,14 +651,13 @@ def run_training(run_mode, domain_adversarial, gan):
                 class_elements_processed[decoder_class] += element_counts[decoder_class]
 
             if batches_processed % log_interval == 0:
-                print("Train epoch %d, iteration %d: [%d/%d (%.1f%%)]" % (epoch,
-                                                                          iteration,
-                                                                          batches_processed,
-                                                                          batch_count,
-                                                                          batches_processed / batch_count * 100.0),
+                print("Train epoch %d: [%d/%d (%.1f%%)]" % (epoch,
+                                                            batches_processed,
+                                                            total_train_batches,
+                                                            batches_processed / total_train_batches * 100.0),
                       flush=True)
                 print_loss_dict(decoder_class_losses, class_elements_processed) 
-        return (decoder_class_losses, class_elements_processed)
+        return decoder_class_losses
 
     def test(epoch, loaders, recon_only=False, noised=True):
         decoder_class_losses = {}
@@ -825,8 +826,8 @@ def run_training(run_mode, domain_adversarial, gan):
             
         return decoder_class_losses
 
-    # Save model with best val set loss thus far
-    best_val_loss = float('inf')
+    # Save model with best dev set loss thus far
+    best_dev_loss = float('inf')
     save_best_only = True   # Set to False to always save model state, regardless of improvement
 
     def save_checkpoint(state_obj, is_best, model_dir):
@@ -853,7 +854,7 @@ def run_training(run_mode, domain_adversarial, gan):
             torch.save(state_obj, best_ckpt_path)
 
     # Regularize via patience-based early stopping
-    max_patience = 5
+    max_patience = 3
     iterations_since_improvement = 0
 
     setup_end_t = time.clock()
@@ -862,66 +863,55 @@ def run_training(run_mode, domain_adversarial, gan):
     # 1-indexed for pretty printing
     print("Starting training!", flush=True)
     for epoch in range(1, epochs + 1):
-        stopped = False
-
         print("\nSTARTING EPOCH %d" % epoch, flush=True)
         train_start_t = time.clock()
 
-        training_iterators = {decoder_class: iter(training_loaders[decoder_class]) for decoder_class in decoder_classes}
-
-        for iteration in range(max(1, int(math.floor(total_train_batches / val_batch_count)))):
-            train_loss_dict, elements_processed = train(epoch, iteration, training_iterators, batch_count=val_batch_count)
-            print_loss_dict(train_loss_dict, elements_processed)
+        train_loss_dict = train(epoch)
+        print_loss_dict(train_loss_dict, train_element_counts)
+        print("\nEPOCH %d TRAIN" % epoch, flush=True)
                 
-            val_loss_dict = test(epoch, val_loaders)
-            print("\nEPOCH %d, ITER %d VALIDATION" % (epoch,
-                                                      iteration),
-                  flush=True)
-            print_loss_dict(val_loss_dict, val_element_counts)
-            val_loss = total_loss(val_loss_dict, val_element_counts)
+        dev_loss_dict = test(epoch, dev_loaders)
+        print("\nEPOCH %d DEV" % epoch, flush=True)
+        print_loss_dict(dev_loss_dict, dev_element_counts)
+        dev_loss = total_loss(dev_loss_dict, dev_element_counts)
             
-            is_best = (val_loss <= best_val_loss)
-            if is_best:
-                best_val_loss = val_loss
-                iterations_since_improvement = 0
-                print("\nNew best val set loss: %.6f" % best_val_loss, flush=True)
-            else:
-                iterations_since_improvement += 1
-                print("\nNo improvement in %d iterations (best val set loss: %.6f)" % (iterations_since_improvement, best_val_loss),
-                      flush=True)
-                if iterations_since_improvement >= max_patience:
-                    print("STOPPING EARLY", flush=True)
-                    stopped = True
-                    break
+        is_best = (dev_loss <= best_dev_loss)
+        if is_best:
+            best_dev_loss = dev_loss
+            iterations_since_improvement = 0
+            print("\nNew best dev set loss: %.6f" % best_dev_loss, flush=True)
+        else:
+            iterations_since_improvement += 1
+            print("\nNo improvement in %d iterations (best dev set loss: %.6f)" % (iterations_since_improvement, best_dev_loss),
+                  flush=True)
+            if iterations_since_improvement >= max_patience:
+                print("STOPPING EARLY", flush=True)
+                break
 
-            if not save_best_only or (save_best_only and is_best):
-                # Save a checkpoint for our model!
-                state_obj = {
-                    "epoch": epoch,
-                    "state_dict": model.state_dict(),
-                    "best_val_loss": best_val_loss,
-                    "val_loss": val_loss,
-                    "decoder_optimizers": {decoder_class: decoder_optimizers[decoder_class].state_dict() for decoder_class in decoder_classes},
-                    "encoder_optimizer": encoder_optimizer.state_dict(),
-                }
-                if domain_adversarial:
-                    state_obj["domain_adversary_optimizer"] = domain_adversary_optimizer.state_dict()
-                elif gan:
-                    state_obj["gan_optimizers"] = {decoder_class: gan_optimizers[decoder_class].state_dict() for decoder_class in decoder_classes}
+        if not save_best_only or (save_best_only and is_best):
+            # Save a checkpoint for our model!
+            state_obj = {
+                "epoch": epoch,
+                "state_dict": model.state_dict(),
+                "best_dev_loss": best_dev_loss,
+                "dev_loss": dev_loss,
+                "decoder_optimizers": {decoder_class: decoder_optimizers[decoder_class].state_dict() for decoder_class in decoder_classes},
+                "encoder_optimizer": encoder_optimizer.state_dict(),
+            }
+            if domain_adversarial:
+                state_obj["domain_adversary_optimizer"] = domain_adversary_optimizer.state_dict()
+            elif gan:
+                state_obj["gan_optimizers"] = {decoder_class: gan_optimizers[decoder_class].state_dict() for decoder_class in decoder_classes}
 
-                save_checkpoint(state_obj, is_best, model_dir)
-                print("Saved checkpoint for model", flush=True)
-            else:
-                print("Not saving checkpoint; no improvement made", flush=True)
+            save_checkpoint(state_obj, is_best, model_dir)
+            print("Saved checkpoint for model", flush=True)
+        else:
+            print("Not saving checkpoint; no improvement made", flush=True)
         
         train_end_t = time.clock()
         print("\nEPOCH %d (%.3fs)" % (epoch,
                                       train_end_t - train_start_t),
               flush=True)
-
-        if stopped:
-            # Need to break out of outer loop as well
-            break
 
     # Once done, load best checkpoint and determine reconstruction loss alone
     print("Computing reconstruction loss...", flush=True)
@@ -938,9 +928,9 @@ def run_training(run_mode, domain_adversarial, gan):
     print("\nTRAINING SET", flush=True)
     print_loss_dict(train_loss_dict, train_element_counts)
 
-    val_loss_dict = test(epoch, val_loaders, recon_only=True, noised=False)
+    dev_loss_dict = test(epoch, dev_loaders, recon_only=True, noised=False)
     print("\nDEV SET", flush=True)
-    print_loss_dict(val_loss_dict, val_element_counts)
+    print_loss_dict(dev_loss_dict, dev_element_counts)
 
     run_end_t = time.clock()
     print("\nCompleted training run in %.3f seconds" % (run_end_t - run_start_t), flush=True)

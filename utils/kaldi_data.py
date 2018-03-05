@@ -75,39 +75,36 @@ class KaldiDataset(Dataset):
         self.num_feats = 0
         self.ark_fd = None
         self.scp_lines = []
-        for scp_line in self.scp_file:
-            utt_id, path_pos = scp_line.replace('\n','').split(' ')
-            path, pos = path_pos.split(':')
+        with open(self.scp_path, 'r') as scp_file:
+            for scp_line in scp_file:
+                utt_id, path_pos = scp_line.replace('\n','').split(' ')
+                path, pos = path_pos.split(':')
 
-            if self.ark_fd is None or self.ark_fd.name != path.split(os.sep)[-1]:
-                if self.ark_fd is not None:
-                    self.ark_fd.close()
-                self.ark_fd = open(path, 'rb')
-            self.ark_fd.seek(int(pos),0)
-            headerstr = self.ark_fd.read(5)
-            header = struct.unpack('<xcccc', headerstr)
-            if header[0] != b'B':
-                print("Input .ark file is not binary", flush=True)
-                exit(1)
+                if self.ark_fd is None or self.ark_fd.name != path.split(os.sep)[-1]:
+                    if self.ark_fd is not None:
+                        self.ark_fd.close()
+                    self.ark_fd = open(path, 'rb')
 
-            rows = 0; cols= 0
-            rowstr = self.ark_fd.read(5)
-            m, rows = struct.unpack('<bi', rowstr)
-            colstr = self.ark_fd.read(5)
-            n, cols = struct.unpack('<bi', colstr)
-            self.num_feats += rows
+                self.ark_fd.seek(int(pos),0)
+                header = struct.unpack('<xcccc', self.ark_fd.read(5))
+                if header[0] != b'B':
+                    print("Input .ark file is not binary", flush=True)
+                    exit(1)
 
-            self.scp_lines.append(scp_line)
-            if self.include_lookup:
-                self.uttid_2_scpline[utt_id] = scp_line
+                rows = 0; cols= 0
+                m, rows = struct.unpack('<bi', self.ark_fd.read(5))
+                n, cols = struct.unpack('<bi', self.ark_fd.read(5))
+
+                self.num_feats += rows
+    
+                self.scp_lines.append(scp_line)
+                if self.include_lookup:
+                    self.uttid_2_scpline[utt_id] = scp_line
 
         self.ark_fd.close()
         self.ark_fd = None
 
         self.num_feats = int(self.num_feats)
-
-        self.ark_fd.close()
-        self.ark_fd = None
         
         # Set up shuffling of utterances within SCP (if enabled)
         self.shuffle_utts = shuffle_utts

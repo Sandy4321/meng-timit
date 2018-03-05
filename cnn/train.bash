@@ -63,11 +63,11 @@ fi
 
 if [ "$PROFILE_RUN" = true ] ; then
     echo "Profiling..."
-    python3 cnn/scripts/train_md.py ${run_mode} ${domain_adversarial} ${gan} profile > $train_log
+    python3 cnn/scripts/train_md.py ${run_mode} ${domain_adversarial} ${gan} profile &> $train_log
     echo "Profiling done"
     # echo "Profiling done -- please run 'snakeviz --port=8890 --server $LOG_DIR/train_${run_mode}.prof' to view the results in browser"
 else
-    python3 cnn/scripts/train_md.py ${run_mode} ${domain_adversarial} ${gan} > $train_log
+    python3 cnn/scripts/train_md.py ${run_mode} ${domain_adversarial} ${gan} &> $train_log
 fi
 
 echo "DONE MULTIDECODER TRAINING JOB"

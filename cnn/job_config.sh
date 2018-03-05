@@ -2,11 +2,11 @@ export FEAT_DIM=40      # 40-dim Mel filter bank
 export LEFT_CONTEXT=7
 export RIGHT_CONTEXT=7
 export OPTIMIZER=Adam
-export LEARNING_RATE=0.0001
-export EPOCHS=50
+export LEARNING_RATE=0.001
+export EPOCHS=100
 export BATCH_SIZE=128
 
-export ENC_CHANNELS=( 256 256 )
+export ENC_CHANNELS=( 32 32 )
 export ENC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
 export ENC_DOWNSAMPLES=( 3 3 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
 export ENC_FC=( )     # Fully-connected layers following conv layers
@@ -14,7 +14,7 @@ export ENC_FC=( )     # Fully-connected layers following conv layers
 export LATENT_DIM=256 
 
 export DEC_FC=( )     # Fully-connected layers before conv layers
-export DEC_CHANNELS=( 256 256 )
+export DEC_CHANNELS=( 32 32 )
 export DEC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
 export DEC_UPSAMPLES=( 3 3 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
 
@@ -32,11 +32,15 @@ export DEC_CHANNELS_DELIM=$(printf "_%s" "${DEC_CHANNELS[@]}")
 export DEC_KERNELS_DELIM=$(printf "_%s" "${DEC_KERNELS[@]}")
 export DEC_UPSAMPLES_DELIM=$(printf "_%s" "${DEC_UPSAMPLES[@]}")
 
-export DECODER_CLASSES=( clean reverb )
+export DECODER_CLASSES=( clean dirty )
 export DECODER_CLASSES_DELIM=$(printf "_%s" "${DECODER_CLASSES[@]}")
 
-export DATASET_NAME=timit
-export CURRENT_FEATS=$FEATS/$DATASET_NAME
+export CLEAN_DATASET=timit_clean
+export CLEAN_FEATS=$FEATS/$CLEAN_DATASET
+
+export DIRTY_DATASET=timit_dirty_single_rir
+export DIRTY_FEATS=$FEATS/$DIRTY_DATASET
+
 export PROFILE_RUN=false
 
 export USE_BACKTRANSLATION=false
@@ -53,14 +57,14 @@ export GAN_FC=( 512 512 )
 export GAN_ACTIVATION=LeakyReLU
 export GAN_FC_DELIM=$(printf "_%s" "${GAN_FC[@]}")
 
-export MODEL_DIR=${MODELS}/cnn/$DATASET_NAME/$EXPT_NAME
+export MODEL_DIR=${MODELS}/cnn/$DIRTY_DATASET/$EXPT_NAME
 mkdir -p $MODEL_DIR
 
-export LOG_DIR=${LOGS}/cnn/$DATASET_NAME/$EXPT_NAME
+export LOG_DIR=${LOGS}/cnn/$DIRTY_DATASET/$EXPT_NAME
 mkdir -p $LOG_DIR
 
 # For data augmentation
-export AUGMENTED_DATA_DIR=${AUGMENTED_DATA}/cnn/$DATASET_NAME/$EXPT_NAME
+export AUGMENTED_DATA_DIR=${AUGMENTED_DATA}/cnn/$DIRTY_DATASET/$EXPT_NAME
 mkdir -p $AUGMENTED_DATA_DIR
 
 # Denoising autoencoder parameters; uses input "destruction" as described in
