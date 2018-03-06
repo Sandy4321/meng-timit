@@ -105,6 +105,8 @@ def run_training(run_mode, domain_adversarial, gan):
     epochs = int(os.environ["EPOCHS"])
     optimizer_name = os.environ["OPTIMIZER"]
     learning_rate = float(os.environ["LEARNING_RATE"])
+    l2_reg = float(os.environ["L2_REG"])
+
     on_gpu = torch.cuda.is_available()
 
     # Set up data files
@@ -121,7 +123,7 @@ def run_training(run_mode, domain_adversarial, gan):
     # Fix random seed for debugging
     torch.manual_seed(1)
     if on_gpu:
-        torch.cuda.manual_seed(1)
+        torch.cuda.manual_seed_all(1)
     random.seed(1)
 
     # Construct autoencoder with our parameters
@@ -231,9 +233,13 @@ def run_training(run_mode, domain_adversarial, gan):
     print("Model has %d trainable parameters" % params, flush=True)
 
     # Set up loss functions
+    # l2_criterion = nn.MSELoss(size_average=False)
+    l2_criterion = nn.MSELoss()
+    if on_gpu:
+        l2_criterion.cuda()
     def reconstruction_loss(recon_x, x):
-        # MSE = nn.MSELoss()(recon_x, x.view(-1, time_dim, freq_dim))
-        L2 = nn.MSELoss(size_average=False)(recon_x, x.view(-1, time_dim, freq_dim))
+        L2 = l2_criterion(recon_x.view(-1, time_dim, freq_dim),
+                          x.view(-1, time_dim, freq_dim))
         return L2
 
     def kld_loss(recon_x, x, mu, logvar):
@@ -246,15 +252,14 @@ def run_training(run_mode, domain_adversarial, gan):
         KLD /= x.size()[0] * feat_dim
 
         return KLD
-    
-    '''
-    def discriminative_loss(guess_class, truth_class):
-        return nn.BCELoss(size_average=False)(guess_class, truth_class)
-    '''
 
     # Use BCEWithLogitsLoss to get better numerical stability
+    # bce_criterion = nn.BCEWithLogitsLoss(size_average=False)
+    bce_criterion = nn.BCEWithLogitsLoss()
+    if on_gpu:
+        bce_criterion.cuda()
     def discriminative_loss(guess_output, truth_class):
-        return nn.BCEWithLogitsLoss(size_average=False)(guess_output, truth_class)
+        return bce_criterion(guess_output, truth_class)
 
 
 
@@ -262,31 +267,30 @@ def run_training(run_mode, domain_adversarial, gan):
 
 
 
-    # Set up optimizers for each decoder, as well as a shared encoder optimizer
-    decoder_optimizers = dict()
-    for decoder_class in decoder_classes:
-        decoder_optimizers[decoder_class] = getattr(optim, optimizer_name)(model.decoder_parameters(decoder_class),
-                                                                   lr=learning_rate)
-    encoder_optimizer = getattr(optim, optimizer_name)(model.encoder_parameters(),
-                                                       lr=learning_rate)
+    # Set up optimizers for the generator portion (multidecoder itself)
+    generator_optimizer = getattr(optim, optimizer_name)(model.generator_parameters(),
+                                                         lr=learning_rate,
+                                                         weight_decay=l2_reg)
     if domain_adversarial:
         # Set up optimizer for domain classifier adversary
         domain_adversary_optimizer = getattr(optim, optimizer_name)(model.domain_adversary_parameters(),
-                                                             lr=learning_rate)
+                                                                    lr=learning_rate,
+                                                                    weight_decay=l2_reg)
     if gan:
         # Set up real/fake discriminators for each decoder
         gan_optimizers = dict()
         for decoder_class in decoder_classes:
             gan_optimizers[decoder_class] = getattr(optim, optimizer_name)(model.gan_parameters(decoder_class),
-                                                                           lr=learning_rate)
+                                                                           lr=learning_rate,
+                                                                           weight_decay=l2_reg)
 
     print("Setting up data...", flush=True)
-    loader_kwargs = {"num_workers": 1, "pin_memory": True} if on_gpu else {}
+    # loader_kwargs = {"num_workers": 1, "pin_memory": True} if on_gpu else {}
+    loader_kwargs = {"num_workers": 1}
 
     print("Setting up training datasets...", flush=True)
     training_datasets = dict()
     training_loaders = dict()
-    print(training_scps, flush=True)
     for decoder_class in decoder_classes:
         current_dataset = KaldiDataset(training_scps[decoder_class],
                                      left_context=left_context,
@@ -370,6 +374,8 @@ def run_training(run_mode, domain_adversarial, gan):
 
 
     def train(epoch):
+        model.train()
+
         training_iterators = {decoder_class: iter(training_loaders[decoder_class]) for decoder_class in decoder_classes}
 
         decoder_class_losses = {}
@@ -402,11 +408,11 @@ def run_training(run_mode, domain_adversarial, gan):
                 feats, targets = training_iterators[decoder_class].next()
                 element_counts[decoder_class] = feats.size()[0]
 
-                feats = Variable(feats)
-                targets = Variable(targets)
                 if on_gpu:
                     feats = feats.cuda()
                     targets = targets.cuda()
+                feats = Variable(feats)
+                targets = Variable(targets)
 
                 feat_dict[decoder_class] = feats
                 targets_dict[decoder_class] = targets
@@ -418,9 +424,10 @@ def run_training(run_mode, domain_adversarial, gan):
                 if noise_ratio > 0.0:
                     # Add noise to signal; randomly drop out % of elements
                     noise_matrix = torch.FloatTensor(np.random.binomial(1, 1.0 - noise_ratio, size=feats.size()).astype(float))
-                    noise_matrix = Variable(noise_matrix)
+                    
                     if on_gpu:
                         noise_matrix = noise_matrix.cuda()
+                    noise_matrix = Variable(noise_matrix, requires_grad=False)
                     noised_feats = torch.mul(feats, noise_matrix)
                 else:
                     noised_feats = feats
@@ -430,14 +437,11 @@ def run_training(run_mode, domain_adversarial, gan):
             # STEP 1: Autoencoder training
 
 
-            encoder_optimizer.zero_grad()
-            model.train()
+            generator_optimizer.zero_grad()
             for i in range(len(decoder_classes)):
                 # This is dumb with two classes, I know
                 decoder_class = decoder_classes[i]
                 other_decoder_class = decoder_classes[(i + 1) % len(decoder_classes)]
-
-                decoder_optimizers[decoder_class].zero_grad()
                 
 
                 # PHASE 1: Backprop through same decoder (denoised reconstruction)
@@ -470,15 +474,13 @@ def run_training(run_mode, domain_adversarial, gan):
                 if run_mode == "vae":
                     decoder_class_losses[decoder_class]["autoencoding_kld"] += k_loss.data[0]
             
-
                 if use_backtranslation:
                     # PHASE 2: Backtranslation
 
 
-                    # Run (unnoised) features through other decoder in eval mode
+                    # Run (unnoised) features through other decoder
                     feats = feat_dict[decoder_class]
 
-                    model.eval()
                     if run_mode == "ae":
                         translated_feats = model.forward_decoder(feats, other_decoder_class)
                     elif run_mode == "vae":
@@ -488,7 +490,6 @@ def run_training(run_mode, domain_adversarial, gan):
                         sys.exit(1)
                     
                     # Run translated features back through original decoder
-                    model.train()
                     if run_mode == "ae":
                         recon_translated_batch = model.forward_decoder(translated_feats, decoder_class)
                     elif run_mode == "vae":
@@ -513,11 +514,8 @@ def run_training(run_mode, domain_adversarial, gan):
                     if run_mode == "vae":
                         decoder_class_losses[decoder_class]["backtranslation_kld"] += k_loss.data[0]
 
-                # Now that all losses are totaled, update weights for current decoder
-                decoder_optimizers[decoder_class].step()
-
-            # Now that we've seen both classes, update the encoder
-            encoder_optimizer.step()
+            # Now that we've seen both classes, update generator
+            generator_optimizer.step()
 
 
             # STEP 2: Adversarial training
@@ -544,9 +542,10 @@ def run_training(run_mode, domain_adversarial, gan):
                     
                     class_prediction = model.domain_adversary.forward(latent)
                     class_truth = torch.FloatTensor(np.zeros(class_prediction.size())) if decoder_class == "clean" else torch.FloatTensor(np.ones(class_prediction.size()))
-                    class_truth = Variable(class_truth)
                     if on_gpu:
                         class_truth = class_truth.cuda()
+                    class_truth = Variable(class_truth)
+
                     disc_loss = discriminative_loss(class_prediction, class_truth)
                     disc_loss.backward(retain_graph=True)
                     disc_losses[decoder_class] = disc_loss
@@ -554,8 +553,9 @@ def run_training(run_mode, domain_adversarial, gan):
                 # Now that we've seen both classes, update the adversary
                 domain_adversary_optimizer.step()
                         
-                # Train just encoder, using negative discriminative loss instead
-                encoder_optimizer.zero_grad()
+                # Train just encoder (no loss prop'ed through decoders anyway),
+                # using negative discriminative loss instead
+                generator_optimizer.zero_grad()
                 for decoder_class in decoder_classes:
                     disc_loss = disc_losses[decoder_class]
                     domain_adv_loss = -disc_loss
@@ -563,7 +563,7 @@ def run_training(run_mode, domain_adversarial, gan):
                     decoder_class_losses[decoder_class]["domain_adversarial_loss"] += domain_adv_loss.data[0]
 
                 # Now that we've seen both classes, update the encoder
-                encoder_optimizer.step()
+                generator_optimizer.step()
             elif gan:
                 # Generative adversarial loss
                 # Adversary determines whether output is real data, or TRANSFORMED data
@@ -572,7 +572,6 @@ def run_training(run_mode, domain_adversarial, gan):
 
                 for decoder_class in decoder_classes:
                     gan_optimizers[decoder_class].zero_grad()
-                    decoder_optimizers[decoder_class].zero_grad()
 
                 # Train just discriminators
                 real_disc_losses = dict()   # Store these so we don't need to compute them again
@@ -597,22 +596,22 @@ def run_training(run_mode, domain_adversarial, gan):
                     # Real examples
                     class_prediction = model.forward_gan(feats, decoder_class)
                     class_truth = torch.FloatTensor(np.ones((class_prediction.size()[0], 1)))
-                    class_truth = Variable(class_truth)
                     if on_gpu:
                         class_truth = class_truth.cuda()
+                    class_truth = Variable(class_truth)
+
                     real_disc_loss = discriminative_loss(class_prediction, class_truth)
-                    
                     real_disc_loss.backward(retain_graph=True)
                     real_disc_losses[decoder_class] = real_disc_loss
                     
                     # Fake examples
                     class_prediction = model.forward_gan(sim_feats, other_decoder_class)
                     class_truth = torch.FloatTensor(np.zeros((class_prediction.size()[0], 1)))
-                    class_truth = Variable(class_truth)
                     if on_gpu:
                         class_truth = class_truth.cuda()
+                    class_truth = Variable(class_truth)
+
                     fake_disc_loss = discriminative_loss(class_prediction, class_truth)
-                    
                     fake_disc_loss.backward(retain_graph=True)
                     fake_disc_losses[other_decoder_class] = real_disc_loss
 
@@ -621,7 +620,7 @@ def run_training(run_mode, domain_adversarial, gan):
                     gan_optimizers[decoder_class].step()
                 
                 # Train encoder + decoders, w/ negative discriminative losses
-                encoder_optimizer.zero_grad()
+                generator_optimizer.zero_grad()
                 for i in range(len(decoder_classes)):
                     # This is dumb with two classes, I know
                     decoder_class = decoder_classes[i]
@@ -641,9 +640,7 @@ def run_training(run_mode, domain_adversarial, gan):
 
                     decoder_class_losses[other_decoder_class]["fake_gan_loss"] += fake_adv_loss.data[0]                
                 # Update decoders and encoder, now that we've seen real and fake examples for both
-                for decoder_class in decoder_classes:
-                    decoder_optimizers[decoder_class].step()
-                encoder_optimizer.step()
+                generator_optimizer.step()
 
             # Print updates, if any
             batches_processed += 1
@@ -682,20 +679,20 @@ def run_training(run_mode, domain_adversarial, gan):
         for decoder_class in decoder_classes:
             for feats, targets in loaders[decoder_class]:
                 # Set to volatile so history isn't saved (i.e., not training time)
-                feats = Variable(feats, volatile=True)
-                targets = Variable(targets, volatile=True)
                 if on_gpu:
                     feats = feats.cuda()
                     targets = targets.cuda()
+                feats = Variable(feats, volatile=True)
+                targets = Variable(targets, volatile=True)
             
                 # Set up noising, if needed
                 if noised:
                     if noise_ratio > 0.0:
                         # Add noise to signal; randomly drop out % of elements
                         noise_matrix = torch.FloatTensor(np.random.binomial(1, 1.0 - noise_ratio, size=feats.size()).astype(float))
-                        noise_matrix = Variable(noise_matrix, volatile=True)
                         if on_gpu:
                             noise_matrix = noise_matrix.cuda()
+                        noise_matrix = Variable(noise_matrix, requires_grad=False, volatile=True)
                         noised_feats = torch.mul(feats, noise_matrix)
                     else:
                         noised_feats = feats.clone()
@@ -781,9 +778,9 @@ def run_training(run_mode, domain_adversarial, gan):
                     
                     class_prediction = model.domain_adversary.forward(latent)
                     class_truth = torch.FloatTensor(np.zeros(class_prediction.size())) if decoder_class == "clean" else torch.FloatTensor(np.ones(class_prediction.size()))
-                    class_truth = Variable(class_truth, volatile=True)
                     if on_gpu:
                         class_truth = class_truth.cuda()
+                    class_truth = Variable(class_truth, volatile=True)
                     disc_loss = discriminative_loss(class_prediction, class_truth)
                     domain_adv_loss = -disc_loss
                     
@@ -805,9 +802,10 @@ def run_training(run_mode, domain_adversarial, gan):
                     # Real examples
                     class_prediction = model.forward_gan(feats, decoder_class)
                     class_truth = torch.FloatTensor(np.ones((class_prediction.size()[0], 1)))
-                    class_truth = Variable(class_truth, volatile=True)
                     if on_gpu:
                         class_truth = class_truth.cuda()
+                    class_truth = Variable(class_truth, volatile=True)
+
                     real_disc_loss = discriminative_loss(class_prediction, class_truth)
                     real_adv_loss = -real_disc_loss
                     decoder_class_losses[decoder_class]["real_gan_loss"] += real_adv_loss.data[0]                
@@ -815,13 +813,13 @@ def run_training(run_mode, domain_adversarial, gan):
                     # Fake examples
                     class_prediction = model.forward_gan(sim_feats, other_decoder_class)
                     class_truth = torch.FloatTensor(np.zeros((class_prediction.size()[0], 1)))
-                    class_truth = Variable(class_truth, volatile=True)
                     if on_gpu:
                         class_truth = class_truth.cuda()
+                    class_truth = Variable(class_truth, volatile=True)
+
                     fake_disc_loss = discriminative_loss(class_prediction, class_truth)
                     fake_adv_loss = -fake_disc_loss
                     decoder_class_losses[other_decoder_class]["fake_gan_loss"] += fake_adv_loss.data[0]                
-
             other_decoder_class = decoder_class
             
         return decoder_class_losses
@@ -867,14 +865,14 @@ def run_training(run_mode, domain_adversarial, gan):
         train_start_t = time.clock()
 
         train_loss_dict = train(epoch)
-        print_loss_dict(train_loss_dict, train_element_counts)
         print("\nEPOCH %d TRAIN" % epoch, flush=True)
+        print_loss_dict(train_loss_dict, train_element_counts)
                 
         dev_loss_dict = test(epoch, dev_loaders)
         print("\nEPOCH %d DEV" % epoch, flush=True)
         print_loss_dict(dev_loss_dict, dev_element_counts)
+
         dev_loss = total_loss(dev_loss_dict, dev_element_counts)
-            
         is_best = (dev_loss <= best_dev_loss)
         if is_best:
             best_dev_loss = dev_loss
@@ -895,8 +893,7 @@ def run_training(run_mode, domain_adversarial, gan):
                 "state_dict": model.state_dict(),
                 "best_dev_loss": best_dev_loss,
                 "dev_loss": dev_loss,
-                "decoder_optimizers": {decoder_class: decoder_optimizers[decoder_class].state_dict() for decoder_class in decoder_classes},
-                "encoder_optimizer": encoder_optimizer.state_dict(),
+                "generator_optimizer": generator_optimizer.state_dict(),
             }
             if domain_adversarial:
                 state_obj["domain_adversary_optimizer"] = domain_adversary_optimizer.state_dict()
