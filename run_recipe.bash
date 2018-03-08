@@ -23,19 +23,28 @@ if [ ! -d recipes/$recipe_name ]; then
     exit 1
 fi
 
-recipe_log_dir=$LOGS/recipes
-recipe_log=$recipe_log_dir/${recipe_name}.log
-if [ -f $recipe_log ]; then
-    # Move old log
-    mv $recipe_log $recipe_log_dir/${recipe_name}-$(date +"%F_%T%z").log
-fi
-
 echo "Setting up environment..."
 export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/lib64:$LD_LIBRARY_PATH
 source activate $KALDI_ENV
 echo "Environment set up."
 
+recipe_log_dir=$LOGS/recipes
+
+train_log=$recipe_log_dir/${recipe_name}-train.log
+if [ -f $train_log ]; then
+    # Move old log
+    mv $train_log $recipe_log_dir/${recipe_name}-train-$(date +"%F_%T%z").log
+fi
+
+eval_log=$recipe_log_dir/${recipe_name}-eval.log
+if [ -f $eval_log ]; then
+    # Move old log
+    mv $eval_log $recipe_log_dir/${recipe_name}-eval-$(date +"%F_%T%z").log
+fi
+
 cd recipes/$recipe_name
-./run.sh &> $recipe_log
+
+./train.sh &> $train_log || exit 1
+./eval.sh &> $eval_log || exit 1
 
 echo "Done running recipe $recipe_name"

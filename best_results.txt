@@ -1,0 +1,29 @@
+Original MFCC:
+===============================================================================
+
+Clean:
+%WER 17.6 | 400 15057 | 84.9 10.9 4.3 2.5 17.6 99.3 | -0.372 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_dev_it6/score_7/ctm_39phn.filt.sys1
+%WER 18.3 | 192 7215 | 84.7 11.1 4.2 3.0 18.3 99.0 | -0.880 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_test_it6/score_5/ctm_39phn.filt.sys
+
+
+Clean baseline:
+===============================================================================
+
+Clean:
+%WER 17.5 | 400 15057 | 85.9 10.6 3.5 3.5 17.5 99.0 | -1.048 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_clean_dev_it6/score_4/ctm_39phn.filt.sys
+%WER 19.0 | 192 7215 | 83.6 11.8 4.6 2.6 19.0 99.5 | -0.468 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_clean_test_it6/score_7/ctm_39phn.filt.sys
+
+Single RIR dirty:
+%WER 81.1 | 400 15057 | 21.8 33.1 45.1 2.9 81.1 100.0 | -4.252 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_dirty_dev_it6/score_4/ctm_39phn.filt.sys
+%WER 80.8 | 192 7215 | 21.5 33.7 44.8 2.3 80.8 100.0 | -4.226 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_dirty_test_it6/score_4/ctm_39phn.filt.sys
+
+
+
+Single RIR baseline:
+===============================================================================
+
+Clean:
+
+Single RIR dirty:
+%WER 25.5 | 400 15057 | 78.6 15.3 6.1 4.2 25.5 100.0 | -0.724 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_dev_it6/score_6/ctm_39phn.filt.sys
+%WER 28.0 | 192 7215 | 76.4 16.6 7.0 4.4 28.0 100.0 | -0.846 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_test_it6/score_6/ctm_39phn.filt.sys

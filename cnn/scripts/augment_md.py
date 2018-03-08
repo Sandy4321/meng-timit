@@ -310,7 +310,7 @@ def augment(source_class, target_class):
     print("=> Processing training data...", flush=True)
     batches_processed = 0
     total_batches = len(training_loaders[source_class])
-    with open(os.path.join(output_dir, "train-src_%s-tar_%s.ark" % (source_class, target_class)), 'w') as ark_fd:
+    with open(os.path.join(output_dir, "train-src_%s-tar_%s-norm.ark" % (source_class, target_class)), 'w') as ark_fd:
         for batch_idx, (feats, targets, utt_ids) in enumerate(training_loaders[source_class]):
             utt_id = utt_ids[0]     # Batch size 1; only one utterance
 
@@ -351,15 +351,15 @@ def augment(source_class, target_class):
 
     # Create corresponding SCP file
     print("===> Writing SCP...", flush=True)
-    with open(os.path.join(output_dir, "train-src_%s-tar_%s.scp" % (source_class, target_class)), 'w') as scp_fd:
-        write_kaldi_scp(scp_fd, os.path.join(output_dir, "train-src_%s-tar_%s.ark" % (source_class, target_class)))
+    with open(os.path.join(output_dir, "train-src_%s-tar_%s-norm.scp" % (source_class, target_class)), 'w') as scp_fd:
+        write_kaldi_scp(scp_fd, os.path.join(output_dir, "train-src_%s-tar_%s-norm.ark" % (source_class, target_class)))
     print("=> Done with training data", flush=True)
 
     # Process dev dataset
     print("=> Processing dev data...", flush=True)
     batches_processed = 0
     total_batches = len(dev_loaders[source_class])
-    with open(os.path.join(output_dir, "dev-src_%s-tar_%s.ark" % (source_class, target_class)), 'w') as ark_fd:
+    with open(os.path.join(output_dir, "dev-src_%s-tar_%s-norm.ark" % (source_class, target_class)), 'w') as ark_fd:
         for batch_idx, (feats, targets, utt_ids) in enumerate(dev_loaders[source_class]):
             utt_id = utt_ids[0]     # Batch size 1; only one utterance
 
@@ -400,8 +400,8 @@ def augment(source_class, target_class):
 
     # Create corresponding SCP file
     print("===> Writing SCP...", flush=True)
-    with open(os.path.join(output_dir, "dev-src_%s-tar_%s.scp" % (source_class, target_class)), 'w') as scp_fd:
-        write_kaldi_scp(scp_fd, os.path.join(output_dir, "dev-src_%s-tar_%s.ark" % (source_class, target_class)))
+    with open(os.path.join(output_dir, "dev-src_%s-tar_%s-norm.scp" % (source_class, target_class)), 'w') as scp_fd:
+        write_kaldi_scp(scp_fd, os.path.join(output_dir, "dev-src_%s-tar_%s-norm.ark" % (source_class, target_class)))
     print("=> Done with dev data", flush=True)
 
 setup_end_t = time.clock()

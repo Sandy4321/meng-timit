@@ -47,23 +47,38 @@ if [ "$domain_adversarial" == true ]; then
         # Move old log
         mv $augment_log $LOG_DIR/augment_domain_adversarial_fc_${DOMAIN_ADV_FC_DELIM}_act_${DOMAIN_ADV_ACTIVATION}_${run_mode}-$(date +"%F_%T%z").log
     fi
-    mkdir -p $AUGMENTED_DATA_DIR/domain_adversarial_fc_${DOMAIN_ADV_FC_DELIM}_act_${DOMAIN_ADV_ACTIVATION}_${run_mode}_ratio${NOISE_RATIO}
+    augment_dir=$AUGMENTED_DATA_DIR/domain_adversarial_fc_${DOMAIN_ADV_FC_DELIM}_act_${DOMAIN_ADV_ACTIVATION}_${run_mode}_ratio${NOISE_RATIO}
 elif [ "$gan" == true ]; then
     augment_log=$LOG_DIR/augment_gan_fc_${GAN_FC_DELIM}_act_${GAN_FC_DELIM}_${run_mode}_ratio${NOISE_RATIO}.log
     if [ -f $augment_log ]; then
         # Move old log
         mv $augment_log $LOG_DIR/augment_gan_fc_${GAN_FC_DELIM}_act_${GAN_FC_DELIM}_${run_mode}_ratio${NOISE_RATIO}-$(date +"%F_%T%z").log
     fi
-    mkdir -p $AUGMENTED_DATA_DIR/gan_fc_${GAN_FC_DELIM}_act_${GAN_ACTIVATION}_${run_mode}_ratio${NOISE_RATIO}
+    augment_dir=$AUGMENTED_DATA_DIR/gan_fc_${GAN_FC_DELIM}_act_${GAN_ACTIVATION}_${run_mode}_ratio${NOISE_RATIO}
 else
     augment_log=$LOG_DIR/augment_${run_mode}_ratio${NOISE_RATIO}.log
     if [ -f $augment_log ]; then
         # Move old log
         mv $augment_log $LOG_DIR/augment_${run_mode}_ratio${NOISE_RATIO}-$(date +"%F_%T%z").log
     fi
-    mkdir -p $AUGMENTED_DATA_DIR/${run_mode}_ratio${NOISE_RATIO}
+    augment_dir=$AUGMENTED_DATA_DIR/${run_mode}_ratio${NOISE_RATIO}
 fi
 
+mkdir -p $augment_dir
+
 python3 cnn/scripts/augment_md.py ${run_mode} ${domain_adversarial} ${gan} &> $augment_log
+
+echo "Undoing CMVN..."
+for data_dir in train dev test; do
+    echo "Processing $data_dir data"
+    for source_class in "${DECODER_CLASSES[@]}"; do
+        for target_class in "${DECODER_CLASSES[@]}"; do
+            echo "Processing source $source_class, target $target_class"
+            name=${data_dir}-src_${source_class}-tar_${target_class}
+            apply-cmvn --norm-vars=true --reverse scp:$CLEAN_FEATS/${data_dir}_cmvn.scp scp:$augment_dir/${name}-norm.scp ark,scp:$augment_dir/${name}.ark,$augment_dir/${name}.scp
+        done
+    done
+    echo "Done processing $data_dir data"
+done
 
 echo "DONE MULTIDECODER DATA AUGMENTATION JOB"

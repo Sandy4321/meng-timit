@@ -112,12 +112,16 @@ def run_training(run_mode, domain_adversarial, gan):
     # Set up data files
     training_scps = dict()
     for decoder_class in decoder_classes:
-        training_scp_name = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "train.scp")
+        training_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "train")
+        # training_scp_name = os.path.join(training_scp_dir, "feats.scp")
+        training_scp_name = os.path.join(training_scp_dir, "feats-norm.scp")
         training_scps[decoder_class] = training_scp_name
 
     dev_scps = dict()
     for decoder_class in decoder_classes:
-        dev_scp_name = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "dev.scp")
+        dev_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "dev")
+        # dev_scp_name = os.path.join(dev_scp_dir, "feats.scp")
+        dev_scp_name = os.path.join(dev_scp_dir, "feats-norm.scp")
         dev_scps[decoder_class] = dev_scp_name
 
     # Fix random seed for debugging
@@ -254,7 +258,6 @@ def run_training(run_mode, domain_adversarial, gan):
         return KLD
 
     # Use BCEWithLogitsLoss to get better numerical stability
-    # bce_criterion = nn.BCEWithLogitsLoss(size_average=False)
     bce_criterion = nn.BCEWithLogitsLoss()
     if on_gpu:
         bce_criterion.cuda()
@@ -359,9 +362,9 @@ def run_training(run_mode, domain_adversarial, gan):
             for loss_key in loss_dict[decoder_class]:
                 current_loss = loss_dict[decoder_class][loss_key] / class_elements_processed[decoder_class]
                 class_loss += current_loss
-                print("===> %s: %.3f" % (loss_key, current_loss), flush=True)
-            print("===> Total for class %s: %.3f" % (decoder_class, class_loss), flush=True)
-        print("TOTAL: %.3f" % total_loss(loss_dict, class_elements_processed), flush=True)
+                print("===> %s: %.6f" % (loss_key, current_loss), flush=True)
+            print("===> Total for class %s: %.6f" % (decoder_class, class_loss), flush=True)
+        print("TOTAL: %.6f" % total_loss(loss_dict, class_elements_processed), flush=True)
 
     def total_loss(loss_dict, class_elements_processed):
         loss = 0.0
