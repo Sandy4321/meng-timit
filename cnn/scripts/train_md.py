@@ -84,7 +84,7 @@ def run_training(run_mode, domain_adversarial, gan):
     use_batch_norm = True if os.environ["USE_BATCH_NORM"] == "true" else False
     weight_init = os.environ["WEIGHT_INIT"]
     
-    use_backtranslation = True if os.environ["USE_BACKTRANSLATION"] == "true" else False
+    use_transformation = True if os.environ["USE_TRANSFORMATION"] == "true" else False
    
     if domain_adversarial:
         domain_adv_fc_sizes = []
@@ -386,13 +386,13 @@ def run_training(run_mode, domain_adversarial, gan):
             decoder_class_losses[decoder_class] = {}
 
             decoder_class_losses[decoder_class]["autoencoding_recon_loss"] = 0.0
-            if use_backtranslation:
-                decoder_class_losses[decoder_class]["backtranslation_recon_loss"] = 0.0
+            if use_transformation:
+                decoder_class_losses[decoder_class]["transformation_recon_loss"] = 0.0
             if run_mode == "vae":
                 # Track KL divergence as well
                 decoder_class_losses[decoder_class]["autoencoding_kld"] = 0.0
-                if use_backtranslation:
-                    decoder_class_losses[decoder_class]["backtranslation_kld"] = 0.0
+                if use_transformation:
+                    decoder_class_losses[decoder_class]["transformation_kld"] = 0.0
             if domain_adversarial:
                 decoder_class_losses[decoder_class]["domain_adversarial_loss"] = 0.0
             elif gan:
@@ -477,12 +477,13 @@ def run_training(run_mode, domain_adversarial, gan):
                 if run_mode == "vae":
                     decoder_class_losses[decoder_class]["autoencoding_kld"] += k_loss.data[0]
             
-                if use_backtranslation:
-                    # PHASE 2: Backtranslation
+                if use_transformation:
+                    # PHASE 2: Transformation
 
 
                     # Run (unnoised) features through other decoder
                     feats = feat_dict[decoder_class]
+                    feats_other = feat_dict[other_decoder_class]
 
                     if run_mode == "ae":
                         translated_feats = model.forward_decoder(feats, other_decoder_class)
@@ -491,31 +492,22 @@ def run_training(run_mode, domain_adversarial, gan):
                     else:
                         print("Unknown train mode %s" % run_mode, flush=True)
                         sys.exit(1)
-                    
-                    # Run translated features back through original decoder
-                    if run_mode == "ae":
-                        recon_translated_batch = model.forward_decoder(translated_feats, decoder_class)
-                    elif run_mode == "vae":
-                        recon_translated_batch, mu, logvar = model.forward_decoder(translated_feats, decoder_class)
-                    else:
-                        print("Unknown train mode %s" % run_mode, flush=True)
-                        sys.exit(1)
 
                     if run_mode == "ae":
-                        r_loss = reconstruction_loss(recon_translated_batch, targets)
+                        r_loss = reconstruction_loss(translated_feats, feats_other)
                         r_loss.backward(retain_graph=True)
                     elif run_mode == "vae":
-                        r_loss = reconstruction_loss(recon_translated_batch, targets)
-                        k_loss = kld_loss(recon_translated_batch, targets, mu, logvar)
+                        r_loss = reconstruction_loss(translated_feats, feats_other)
+                        k_loss = kld_loss(translated_feats, feats_other, mu, logvar)
                         vae_loss = r_loss + k_loss
                         vae_loss.backward(retain_graph=True)
                     else:
                         print("Unknown train mode %s" % run_mode, flush=True)
                         sys.exit(1)
                     
-                    decoder_class_losses[decoder_class]["backtranslation_recon_loss"] += r_loss.data[0]
+                    decoder_class_losses[decoder_class]["transformation_recon_loss"] += r_loss.data[0]
                     if run_mode == "vae":
-                        decoder_class_losses[decoder_class]["backtranslation_kld"] += k_loss.data[0]
+                        decoder_class_losses[decoder_class]["transformation_kld"] += k_loss.data[0]
 
             # Now that we've seen both classes, update generator
             generator_optimizer.step()
@@ -660,63 +652,92 @@ def run_training(run_mode, domain_adversarial, gan):
         return decoder_class_losses
 
     def test(epoch, loaders, recon_only=False, noised=True):
+        iterators = {decoder_class: iter(loaders[decoder_class]) for decoder_class in decoder_classes}
+
         decoder_class_losses = {}
+        total_batches = float('inf')
         for decoder_class in decoder_classes:
+            total_batches = min(total_batches, len(loaders[decoder_class]))
             decoder_class_losses[decoder_class] = {}
 
             decoder_class_losses[decoder_class]["autoencoding_recon_loss"] = 0.0
-            if use_backtranslation:
-                decoder_class_losses[decoder_class]["backtranslation_recon_loss"] = 0.0
+            if use_transformation:
+                decoder_class_losses[decoder_class]["transformation_recon_loss"] = 0.0
             if run_mode == "vae" and not recon_only:
                 # Track KL divergence as well
                 decoder_class_losses[decoder_class]["autoencoding_kld"] = 0.0
-                if use_backtranslation:
-                    decoder_class_losses[decoder_class]["backtranslation_kld"] = 0.0
+                if use_transformation:
+                    decoder_class_losses[decoder_class]["transformation_kld"] = 0.0
             if domain_adversarial and not recon_only:
                 decoder_class_losses[decoder_class]["domain_adversarial_loss"] = 0.0
             elif gan and not recon_only:
                 decoder_class_losses[decoder_class]["real_gan_loss"] = 0.0
                 decoder_class_losses[decoder_class]["fake_gan_loss"] = 0.0
+        
+        batches_processed = 0
+        class_elements_processed = {decoder_class: 0 for decoder_class in decoder_classes}
 
-        other_decoder_class = decoder_classes[1]
-        for decoder_class in decoder_classes:
-            for feats, targets in loaders[decoder_class]:
+        while batches_processed < total_batches:
+            # Get data for each decoder class
+            feat_dict = dict()
+            targets_dict = dict()
+            element_counts = dict()     # Used to get loss per element, rather than batch, in printed output
+            for decoder_class in decoder_classes:
+                feats, targets = iterators[decoder_class].next()
+                element_counts[decoder_class] = feats.size()[0]
+
                 # Set to volatile so history isn't saved (i.e., not training time)
                 if on_gpu:
                     feats = feats.cuda()
                     targets = targets.cuda()
                 feats = Variable(feats, volatile=True)
                 targets = Variable(targets, volatile=True)
-            
-                # Set up noising, if needed
-                if noised:
-                    if noise_ratio > 0.0:
-                        # Add noise to signal; randomly drop out % of elements
-                        noise_matrix = torch.FloatTensor(np.random.binomial(1, 1.0 - noise_ratio, size=feats.size()).astype(float))
-                        if on_gpu:
-                            noise_matrix = noise_matrix.cuda()
-                        noise_matrix = Variable(noise_matrix, requires_grad=False, volatile=True)
-                        noised_feats = torch.mul(feats, noise_matrix)
-                    else:
-                        noised_feats = feats.clone()
 
-                # PHASE 1: Backprop through same decoder (denoised autoencoding)
-                model.eval()
+                feat_dict[decoder_class] = feats
+                targets_dict[decoder_class] = targets
+            
+            # Handle noising, if desired
+            noised_feat_dict = dict()
+            for decoder_class in decoder_classes:
+                feats = feat_dict[decoder_class]
+                if noise_ratio > 0.0:
+                    # Add noise to signal; randomly drop out % of elements
+                    noise_matrix = torch.FloatTensor(np.random.binomial(1, 1.0 - noise_ratio, size=feats.size()).astype(float))
+                    
+                    # Set to volatile so history isn't saved (i.e., not training time)
+                    if on_gpu:
+                        noise_matrix = noise_matrix.cuda()
+                    noise_matrix = Variable(noise_matrix, requires_grad=False, volatile=True)
+                    noised_feats = torch.mul(feats, noise_matrix)
+                else:
+                    noised_feats = feats
+                noised_feat_dict[decoder_class] = noised_feats
+
+
+            # STEP 1: Autoencoder testing
+
+
+            for i in range(len(decoder_classes)):
+                # This is dumb with two classes, I know
+                decoder_class = decoder_classes[i]
+                other_decoder_class = decoder_classes[(i + 1) % len(decoder_classes)]
+                
+
+                # PHASE 1: Backprop through same decoder (denoised reconstruction)
+
+
+                noised_feats = noised_feat_dict[decoder_class]
+                targets = targets_dict[decoder_class]
+
                 if run_mode == "ae":
-                    if noised:
-                        recon_batch = model.forward_decoder(noised_feats, decoder_class)
-                    else:
-                        recon_batch = model.forward_decoder(feats, decoder_class)
+                    recon_batch = model.forward_decoder(noised_feats, decoder_class)
                 elif run_mode == "vae":
-                    if noised:
-                        recon_batch, mu, logvar = model.forward_decoder(noised_feats, decoder_class)
-                    else:
-                        recon_batch, mu, logvar = model.forward_decoder(feats, decoder_class)
+                    recon_batch, mu, logvar = model.forward_decoder(noised_feats, decoder_class)
                 else:
                     print("Unknown train mode %s" % run_mode, flush=True)
                     sys.exit(1)
 
-                if run_mode == "ae" or recon_only:
+                if run_mode == "ae":
                     r_loss = reconstruction_loss(recon_batch, targets)
                 elif run_mode == "vae":
                     r_loss = reconstruction_loss(recon_batch, targets)
@@ -727,13 +748,17 @@ def run_training(run_mode, domain_adversarial, gan):
                     sys.exit(1)
 
                 decoder_class_losses[decoder_class]["autoencoding_recon_loss"] += r_loss.data[0]
-                if run_mode == "vae" and not recon_only:
+                if run_mode == "vae":
                     decoder_class_losses[decoder_class]["autoencoding_kld"] += k_loss.data[0]
+            
+                if use_transformation:
+                    # PHASE 2: Transformation
 
-                if use_backtranslation:
-                    # PHASE 2: Backtranslation
 
                     # Run (unnoised) features through other decoder
+                    feats = feat_dict[decoder_class]
+                    feats_other = feat_dict[other_decoder_class]
+
                     if run_mode == "ae":
                         translated_feats = model.forward_decoder(feats, other_decoder_class)
                     elif run_mode == "vae":
@@ -741,32 +766,30 @@ def run_training(run_mode, domain_adversarial, gan):
                     else:
                         print("Unknown train mode %s" % run_mode, flush=True)
                         sys.exit(1)
-                    
-                    # Run translated features back through original decoder
-                    if run_mode == "ae":
-                        recon_translated_batch = model.forward_decoder(translated_feats, decoder_class)
-                    elif run_mode == "vae":
-                        recon_translated_batch, mu, logvar = model.forward_decoder(translated_feats, decoder_class)
-                    else:
-                        print("Unknown train mode %s" % run_mode, flush=True)
-                        sys.exit(1)
 
-                    if run_mode == "ae" or recon_only:
-                        r_loss = reconstruction_loss(recon_translated_batch, targets)
+                    if run_mode == "ae":
+                        r_loss = reconstruction_loss(translated_feats, feats_other)
                     elif run_mode == "vae":
-                        r_loss = reconstruction_loss(recon_translated_batch, targets)
-                        k_loss = kld_loss(recon_translate_batch, targets, mu, logvar)
+                        r_loss = reconstruction_loss(translated_feats, feats_other)
+                        k_loss = kld_loss(translated_feats, feats_other, mu, logvar)
                         vae_loss = r_loss + k_loss
                     else:
                         print("Unknown train mode %s" % run_mode, flush=True)
                         sys.exit(1)
                     
-                    decoder_class_losses[decoder_class]["backtranslation_recon_loss"] += r_loss.data[0]
-                    if run_mode == "vae" and not recon_only:
-                        decoder_class_losses[decoder_class]["backtranslation_kld"] += k_loss.data[0]
-               
-                if domain_adversarial and not recon_only:
-                    # Domain adversarial loss
+                    decoder_class_losses[decoder_class]["transformation_recon_loss"] += r_loss.data[0]
+                    if run_mode == "vae":
+                        decoder_class_losses[decoder_class]["transformation_kld"] += k_loss.data[0]
+
+
+            # STEP 2: Adversarial testing
+
+
+            if domain_adversarial:
+                # Test just domain_adversary
+                for decoder_class in decoder_classes:
+                    feats = feat_dict[decoder_class]
+
                     if run_mode == "ae":
                         latent, fc_input_size, unpool_sizes, pooling_indices = model.encode(feats.view(-1,
                                                                                                        1,
@@ -781,17 +804,28 @@ def run_training(run_mode, domain_adversarial, gan):
                     
                     class_prediction = model.domain_adversary.forward(latent)
                     class_truth = torch.FloatTensor(np.zeros(class_prediction.size())) if decoder_class == "clean" else torch.FloatTensor(np.ones(class_prediction.size()))
+                    
+                    # Set to volatile so history isn't saved (i.e., not training time)
                     if on_gpu:
                         class_truth = class_truth.cuda()
                     class_truth = Variable(class_truth, volatile=True)
+
                     disc_loss = discriminative_loss(class_prediction, class_truth)
                     domain_adv_loss = -disc_loss
-                    
                     decoder_class_losses[decoder_class]["domain_adversarial_loss"] += domain_adv_loss.data[0]
-                elif gan and not recon_only:
-                    # Generative adversarial loss
-                    # Adversary determines whether output is real data, or TRANSFORMED data
-                    # i.e., is this example real SDM1 data, or IHM data decoded into SDM1 via multidecoder?
+            elif gan:
+                # Generative adversarial loss
+                # Adversary determines whether output is real data, or TRANSFORMED data
+                # Convention for classifier: 1 is True, 0 is Fake
+
+                # Test just discriminators
+                for i in range(len(decoder_classes)):
+                    # This is dumb with two classes, I know
+                    decoder_class = decoder_classes[i]
+                    other_decoder_class = decoder_classes[(i + 1) % len(decoder_classes)]
+
+                    feats = feat_dict[decoder_class] 
+
                     if run_mode == "ae":
                         # Create minibatch of transformed examples
                         sim_feats = model.forward_decoder(feats, other_decoder_class)
@@ -801,10 +835,12 @@ def run_training(run_mode, domain_adversarial, gan):
                     else:
                         print("Unknown train mode %s" % run_mode, flush=True)
                         sys.exit(1)
-                
+                    
                     # Real examples
                     class_prediction = model.forward_gan(feats, decoder_class)
                     class_truth = torch.FloatTensor(np.ones((class_prediction.size()[0], 1)))
+                    
+                    # Set to volatile so history isn't saved (i.e., not training time)
                     if on_gpu:
                         class_truth = class_truth.cuda()
                     class_truth = Variable(class_truth, volatile=True)
@@ -816,6 +852,8 @@ def run_training(run_mode, domain_adversarial, gan):
                     # Fake examples
                     class_prediction = model.forward_gan(sim_feats, other_decoder_class)
                     class_truth = torch.FloatTensor(np.zeros((class_prediction.size()[0], 1)))
+                    
+                    # Set to volatile so history isn't saved (i.e., not training time)
                     if on_gpu:
                         class_truth = class_truth.cuda()
                     class_truth = Variable(class_truth, volatile=True)
@@ -823,9 +861,11 @@ def run_training(run_mode, domain_adversarial, gan):
                     fake_disc_loss = discriminative_loss(class_prediction, class_truth)
                     fake_adv_loss = -fake_disc_loss
                     decoder_class_losses[other_decoder_class]["fake_gan_loss"] += fake_adv_loss.data[0]                
-            other_decoder_class = decoder_class
-            
+            batches_processed += 1
+
         return decoder_class_losses
+
+
 
     # Save model with best dev set loss thus far
     best_dev_loss = float('inf')
