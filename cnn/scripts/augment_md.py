@@ -351,8 +351,9 @@ def augment(source_class, target_class):
 
     # Create corresponding SCP file
     print("===> Writing SCP...", flush=True)
-    with open(os.path.join(output_dir, "train-src_%s-tar_%s-norm.scp" % (source_class, target_class)), 'w') as scp_fd:
-        write_kaldi_scp(scp_fd, os.path.join(output_dir, "train-src_%s-tar_%s-norm.ark" % (source_class, target_class)))
+    ark_path = os.path.join(output_dir, "train-src_%s-tar_%s-norm.ark" % (source_class, target_class)
+    scp_path = os.path.join(output_dir, "train-src_%s-tar_%s-norm.scp" % (source_class, target_class)
+    write_kaldi_scp(ark_path, scp_path)
     print("=> Done with training data", flush=True)
 
     # Process dev dataset
@@ -400,8 +401,9 @@ def augment(source_class, target_class):
 
     # Create corresponding SCP file
     print("===> Writing SCP...", flush=True)
-    with open(os.path.join(output_dir, "dev-src_%s-tar_%s-norm.scp" % (source_class, target_class)), 'w') as scp_fd:
-        write_kaldi_scp(scp_fd, os.path.join(output_dir, "dev-src_%s-tar_%s-norm.ark" % (source_class, target_class)))
+    ark_path = os.path.join(output_dir, "dev-src_%s-tar_%s-norm.ark" % (source_class, target_class)
+    scp_path = os.path.join(output_dir, "dev-src_%s-tar_%s-norm.scp" % (source_class, target_class)
+    write_kaldi_scp(ark_path, scp_path)
     print("=> Done with dev data", flush=True)
 
 setup_end_t = time.clock()

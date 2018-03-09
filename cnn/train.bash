@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p gpu
+#SBATCH -p 1080
 #SBATCH -n1
 #SBATCH -N1-1
 #SBATCH -c 4
@@ -7,7 +7,6 @@
 #SBATCH --mem=32768
 #SBATCH --time=24:00:00
 #SBATCH -J train_md
-#SBATCH --exclude=sls-sm-[5,9]
 
 echo "STARTING MULTIDECODER TRAINING JOB"
 

@@ -1,5 +1,6 @@
 import bisect
 import os
+import subprocess as sp
 import struct
 
 import numpy as np
@@ -51,8 +52,12 @@ def write_kaldi_ark(ark_fd, utt_id, arr):
     ark_fd.write(struct.pack('<bi', 4, rows))
     ark_fd.write(struct.pack('<bi', 4, cols))
     ark_fd.write(mat)
-
-
+    
+def write_kaldi_scp(ark_path, scp_path):
+    # Just use the kaldi command directly (moves ark in process, but it's just a copy)
+    completed_process = sp.run("mv %s %s-tmp" % (ark_path, ark_path), shell=True, check=True)
+    completed_process = sp.run("copy-feats ark:%s-tmp ark,scp:%s,%s" % (ark_path, ark_path, scp_path), shell=True, check=True)
+    completed_process = sp.run("rm %s-tmp" % ark_path, shell=True, check=True)
 
 # Dataset class to support loading just features from Kaldi files
 # Do not use Pytorch's built-in shuffle in DataLoader -- use the optional arguments here instead
