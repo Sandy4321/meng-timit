@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p gpu
+#SBATCH -p sm
 #SBATCH -n1
 #SBATCH -N1-1
 #SBATCH -c 4

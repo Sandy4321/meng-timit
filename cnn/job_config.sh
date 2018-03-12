@@ -1,21 +1,21 @@
 export FEAT_DIM=40      # 40-dim Mel filter bank
 export LEFT_CONTEXT=5
 export RIGHT_CONTEXT=5
-export OPTIMIZER=SGD
+export OPTIMIZER=Adam
 export LEARNING_RATE=0.001
 export L2_REG=0.0
 export EPOCHS=100
-export BATCH_SIZE=128
+export BATCH_SIZE=64
 
-export ENC_CHANNELS=( 32 32 )
+export ENC_CHANNELS=( 64 64 )
 export ENC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
 export ENC_DOWNSAMPLES=( 2 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
-export ENC_FC=( )     # Fully-connected layers following conv layers
+export ENC_FC=( 512 )     # Fully-connected layers following conv layers
 
 export LATENT_DIM=256
 
-export DEC_FC=( )     # Fully-connected layers before conv layers
-export DEC_CHANNELS=( 32 32 )
+export DEC_FC=( 512 )     # Fully-connected layers before conv layers
+export DEC_CHANNELS=( 64 64 )
 export DEC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
 export DEC_UPSAMPLES=( 2 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
 
@@ -39,8 +39,8 @@ export DECODER_CLASSES_DELIM=$(printf "_%s" "${DECODER_CLASSES[@]}")
 export CLEAN_DATASET=timit_clean
 export CLEAN_FEATS=$FEATS/$CLEAN_DATASET
 
-# export DIRTY_DATASET=timit_dirty_single_rir
-export DIRTY_DATASET=timit_gaussian_5.0
+export DIRTY_DATASET=timit_dirty_single_rir
+# export DIRTY_DATASET=timit_gaussian_5.0
 export DIRTY_FEATS=$FEATS/$DIRTY_DATASET
 
 export USE_RECONSTRUCTION=true

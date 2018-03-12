@@ -14,7 +14,7 @@ sys.path.append("./cnn")
 
 from loss_dict import LossDict
 from setup_md import setup_model, best_ckpt_path
-from utils.kaldi_data import KaldiDataset
+from utils.kaldi_data import KaldiParallelDataset
 
 # Uses some structure from https://github.com/pytorch/examples/blob/master/vae/main.py
 run_start_t = time.clock()
@@ -51,19 +51,19 @@ for res_str in os.environ["DECODER_CLASSES_DELIM"].split("_"):
     if len(res_str) > 0:
         decoder_classes.append(res_str)
 
-training_scps = dict()
+training_scps = []
 for decoder_class in decoder_classes:
     training_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "train")
     # training_scp_name = os.path.join(training_scp_dir, "feats.scp")
     training_scp_name = os.path.join(training_scp_dir, "feats-norm.scp")
-    training_scps[decoder_class] = training_scp_name
+    training_scps.append(training_scp_name)
 
-dev_scps = dict()
+dev_scps = []
 for decoder_class in decoder_classes:
     dev_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "dev")
     # dev_scp_name = os.path.join(dev_scp_dir, "feats.scp")
     dev_scp_name = os.path.join(dev_scp_dir, "feats-norm.scp")
-    dev_scps[decoder_class] = dev_scp_name
+    dev_scps.append(dev_scp_name)
 
 # Set up loss functions
 mse_criterion = nn.MSELoss()
@@ -81,49 +81,33 @@ print("Setting up data...", flush=True)
 loader_kwargs = {"num_workers": 1, "pin_memory": True} if on_gpu else {}
 
 print("Setting up training datasets...", flush=True)
-training_datasets = dict()
-training_loaders = dict()
-for decoder_class in decoder_classes:
-    current_dataset = KaldiDataset(training_scps[decoder_class],
-                                 left_context=left_context,
-                                 right_context=right_context,
-                                 shuffle_utts=True,
-                                 shuffle_feats=True)
-    training_datasets[decoder_class] = current_dataset
-    training_loaders[decoder_class] = DataLoader(current_dataset,
-                                                 batch_size=batch_size,
-                                                 shuffle=False,
-                                                 **loader_kwargs)
-    print("Using %d training features (%d batches) for class %s" % (len(current_dataset),
-                                                                    len(training_loaders[decoder_class]),
-                                                                    decoder_class),
-          flush=True)
+training_dataset = KaldiParallelDataset(training_scps,
+                                        left_context=left_context,
+                                        right_context=right_context,
+                                        shuffle_utts=True)
+training_loader = DataLoader(training_dataset,
+                             batch_size=batch_size,
+                             shuffle=False,
+                             **loader_kwargs)
+print("Using %d training features (%d batches)" % (len(training_dataset),
+                                                   len(training_loader)),
+      flush=True)
 
 print("Setting up dev datasets...", flush=True)
-dev_datasets = dict()
-dev_loaders = dict()
-for decoder_class in decoder_classes:
-    current_dataset = KaldiDataset(dev_scps[decoder_class],
-                                 left_context=left_context,
-                                 right_context=right_context,
-                                 shuffle_utts=True,
-                                 shuffle_feats=True)
-    dev_datasets[decoder_class] = current_dataset
-    dev_loaders[decoder_class] = DataLoader(current_dataset,
-                                            batch_size=batch_size,
-                                            shuffle=False,
-                                            **loader_kwargs)
-    print("Using %d dev features (%d batches) for class %s" % (len(current_dataset),
-                                                               len(dev_loaders[decoder_class]),
-                                                               decoder_class),
-          flush=True)
-
-# If datasets mismatch in size, use the smallest so we don't overrun the end of the iterators
-total_train_batches = min([len(training_loaders[decoder_class]) for decoder_class in decoder_classes])
-print("%d total batches" % total_train_batches, flush=True)
+dev_dataset = KaldiParallelDataset(dev_scps,
+                                   left_context=left_context,
+                                   right_context=right_context,
+                                   shuffle_utts=True)
+dev_loader = DataLoader(dev_dataset,
+                        batch_size=batch_size,
+                        shuffle=False,
+                        **loader_kwargs)
+print("Using %d dev features (%d batches)" % (len(dev_dataset),
+                                              len(dev_loader)),
+      flush=True)
 
 # Set up logging at a reasonable interval
-log_interval = max(1, total_train_batches // 10)
+log_interval = max(1, len(training_loader) // 10)
     
 
 print("Done setting up data.", flush=True)
@@ -133,18 +117,19 @@ print("Done setting up data.", flush=True)
 def train(epoch):
     model.train()
 
-    # Set up some bookkeeping
-    training_iterators = {decoder_class: iter(training_loaders[decoder_class]) for decoder_class in decoder_classes}
+    # Set up some bookkeeping on loss values
     decoder_class_losses = LossDict(decoder_classes)
     batches_processed = 0
 
-    while batches_processed < total_train_batches:
+    for batch_idx, (all_feats, all_targets) in enumerate(training_loader):
         # Get data for each decoder class
         feat_dict = dict()
         targets_dict = dict()
-        for decoder_class in decoder_classes:
-            feats, targets = training_iterators[decoder_class].next()
+        for i in range(len(all_feats)):
+            decoder_class = decoder_classes[i]
 
+            feats = all_feats[i]
+            targets = all_targets[i]
             if on_gpu:
                 feats = feats.cuda()
                 targets = targets.cuda()
@@ -215,27 +200,28 @@ def train(epoch):
         if batches_processed % log_interval == 0:
             print("Train epoch %d: [%d/%d (%.1f%%)]" % (epoch,
                                                         batches_processed,
-                                                        total_train_batches,
-                                                        batches_processed / total_train_batches * 100.0),
+                                                        len(training_loader),
+                                                        batches_processed / len(training_loader) * 100.0),
                   flush=True)
             print(decoder_class_losses, flush=True)
     return decoder_class_losses
 
-def test(epoch, loaders):
-    iterators = {decoder_class: iter(loaders[decoder_class]) for decoder_class in decoder_classes}
-    decoder_class_losses = LossDict(decoder_classes)
+def test(epoch, loader):
+    model.eval()
 
-    total_batches = min([len(loaders[decoder_class]) for decoder_class in decoder_classes])
-    
+    decoder_class_losses = LossDict(decoder_classes)
     batches_processed = 0
-    while batches_processed < total_batches:
+
+    for batch_idx, (all_feats, all_targets) in enumerate(loader):
         # Get data for each decoder class
         feat_dict = dict()
         targets_dict = dict()
-        for decoder_class in decoder_classes:
-            feats, targets = iterators[decoder_class].next()
+        for i in range(len(all_feats)):
+            decoder_class = decoder_classes[i]
 
             # Set to volatile so history isn't saved (i.e., not training time)
+            feats = all_feats[i]
+            targets = all_targets[i]
             if on_gpu:
                 feats = feats.cuda()
                 targets = targets.cuda()
@@ -310,7 +296,7 @@ for epoch in range(1, epochs + 1):
     print("\nEPOCH %d TRAIN" % epoch, flush=True)
     print(train_loss_dict, flush=True)
             
-    dev_loss_dict = test(epoch, dev_loaders)
+    dev_loss_dict = test(epoch, dev_loader)
     print("\nEPOCH %d DEV" % epoch, flush=True)
     print(dev_loss_dict, flush=True)
     
@@ -355,11 +341,11 @@ model.load_state_dict(checkpoint["state_dict"])
 model.eval()
 print("Loaded checkpoint; best model ready now.")
 
-train_loss_dict = test(epoch, training_loaders)
+train_loss_dict = test(epoch, training_loader)
 print("\nTRAINING SET", flush=True)
 print(train_loss_dict, flush=True)
 
-dev_loss_dict = test(epoch, dev_loaders)
+dev_loss_dict = test(epoch, dev_loader)
 print("\nDEV SET", flush=True)
 print(dev_loss_dict, flush=True)
 

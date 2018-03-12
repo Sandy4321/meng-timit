@@ -1,5 +1,6 @@
 import bisect
 import os
+import random
 import subprocess as sp
 import struct
 
@@ -62,7 +63,7 @@ def write_kaldi_scp(ark_path, scp_path):
 # Dataset class to support loading just features from Kaldi files
 # Do not use Pytorch's built-in shuffle in DataLoader -- use the optional arguments here instead
 class KaldiDataset(Dataset):
-    def __init__(self, scp_path, left_context=0, right_context=0, shuffle_utts=False, shuffle_feats=False, include_lookup=False):
+    def __init__(self, scp_path, left_context=0, right_context=0, shuffle_utts=False, include_lookup=False):
         super(KaldiDataset, self).__init__()
 
         self.left_context = left_context
@@ -117,9 +118,6 @@ class KaldiDataset(Dataset):
             # Shuffle SCP list in place
             np.random.shuffle(self.scp_lines)
 
-        # Set up shuffling of frames within utterance (if enabled)
-        self.shuffle_feats = shuffle_feats
-
         # Track where we are with respect to feature index
         self.current_utt_id = None
         self.current_feat_mat = None
@@ -147,10 +145,6 @@ class KaldiDataset(Dataset):
                 self.current_feat_mat[i, :] = feat_mat[0, :]
             for i in range(self.right_context):
                 self.current_feat_mat[self.left_context + feat_mat.shape[0] + i, :] = feat_mat[feat_mat.shape[0] - 1, :]
-
-            # Shuffle features if enabled
-            if self.shuffle_feats:
-                np.random.shuffle(self.current_feat_mat)
             
             self.current_feat_idx = 0
 
@@ -187,7 +181,7 @@ class KaldiDataset(Dataset):
 # Includes utterance ID data data for evaluation and decoding
 # Do not use Pytorch's built-in shuffle in DataLoader -- use the optional arguments here instead
 class KaldiEvalDataset(Dataset):
-    def __init__(self, scp_path, shuffle_utts=False, shuffle_feats=False):
+    def __init__(self, scp_path, shuffle_utts=False):
         super(KaldiEvalDataset, self).__init__()
 
         # Load in Kaldi files
@@ -208,9 +202,6 @@ class KaldiEvalDataset(Dataset):
             # Shuffle SCP list in place
             np.random.shuffle(self.scp_lines)
 
-        # Set up shuffling of feats within utterance
-        self.shuffle_feats = shuffle_feats
-
     # Utterance-level
     def __len__(self):
         return len(self.utt_ids)
@@ -224,9 +215,6 @@ class KaldiEvalDataset(Dataset):
         # Get next utt from SCP file
         scp_line = self.scp_lines[idx]
         utt_id, feat_mat, ark_fd = read_next_utt(scp_line)
-        if self.shuffle_feats:
-            # Shuffle features in-place
-            np.random.shuffle(feat_mat)
         feats_tensor = torch.FloatTensor(feat_mat)
         
         # Target is identical to feature tensor
@@ -243,3 +231,124 @@ class KaldiEvalDataset(Dataset):
     def feats_for_uttid(self, utt_id):
         utt_id, feat_mat, ark_fd = read_next_utt(self.uttid_2_scpline[utt_id])
         return feat_mat
+
+# Dataset class to support loading parallel features (different domains) from Kaldi files
+# Do not use Pytorch's built-in shuffle in DataLoader -- use the optional arguments here instead
+class KaldiParallelDataset(Dataset):
+    def __init__(self, scp_paths, left_context=0, right_context=0, shuffle_utts=False):
+        super(KaldiParallelDataset, self).__init__()
+
+        self.left_context = left_context
+        self.right_context = right_context
+
+        # Load in Kaldi files
+        self.scp_paths = scp_paths
+        self.ark_fds = [None for x in range(len(self.scp_paths))]
+        
+        # Determine how many features are included
+        self.scp_lines = [[] for x in range(len(self.scp_paths))]
+        self.num_feats = None
+        for i in range(len(self.scp_paths)):
+            scp_path = self.scp_paths[i]
+            ark_fd = None
+            current_num_feats = 0
+
+            with open(scp_path, 'r') as scp_file:
+                for scp_line in scp_file:
+                    utt_id, path_pos = scp_line.replace('\n','').split(' ')
+                    path, pos = path_pos.split(':')
+
+                    if ark_fd is None or ark_fd.name != path.split(os.sep)[-1]:
+                        if ark_fd is not None:
+                            ark_fd.close()
+                        ark_fd = open(path, 'rb')
+
+                    ark_fd.seek(int(pos),0)
+                    header = struct.unpack('<xcccc', ark_fd.read(5))
+                    if header[0] != b'B':
+                        print("Input .ark file is not binary", flush=True)
+                        exit(1)
+
+                    rows = 0; cols= 0
+                    m, rows = struct.unpack('<bi', ark_fd.read(5))
+                    n, cols = struct.unpack('<bi', ark_fd.read(5))
+
+                    current_num_feats += rows
+        
+                    self.scp_lines[i].append(scp_line)
+
+            ark_fd.close()
+            if self.num_feats is None:
+                self.num_feats = current_num_feats
+            elif self.num_feats != current_num_feats:
+                raise RuntimeError("This does not seem to be a parallel dataset -- number of features mismatch (%d != %d)" % (current_num_feats, self.num_feats))
+        
+        # Set up shuffling of utterances within SCP (if enabled)
+        self.shuffle_utts = shuffle_utts
+        if self.shuffle_utts:
+            # Shuffle SCP lists in place
+            self.shuffle_scp_lines()
+
+        # Track where we are with respect to feature index
+        self.current_utt_id = None
+        self.current_feat_mats = None
+        self.current_utt_idx = 0
+        self.current_feat_idx = 0
+
+    def __del__(self):
+        for ark_fd in self.ark_fds:
+            if ark_fd is not None:
+                ark_fd.close()
+        
+    def __len__(self):
+        return self.num_feats
+
+    def __getitem__(self, idx):
+        if self.current_feat_mats is None:
+            self.current_feat_mats = []
+            for i in range(len(self.scp_lines)):
+                current_scp_lines = self.scp_lines[i]
+                scp_line = current_scp_lines[self.current_utt_idx]
+                self.current_utt_id, feat_mat, self.ark_fds[i] = read_next_utt(scp_line,
+                                                                               ark_fd=self.ark_fds[i])
+
+                # Duplicate frames at start and end of utterance (as in Kaldi)
+                current_feat_mat = np.empty((feat_mat.shape[0] + self.left_context + self.right_context,
+                                             feat_mat.shape[1]))
+                current_feat_mat[self.left_context:self.left_context + feat_mat.shape[0], :] = feat_mat
+                for i in range(self.left_context):
+                    current_feat_mat[i, :] = feat_mat[0, :]
+                for i in range(self.right_context):
+                    current_feat_mat[self.left_context + feat_mat.shape[0] + i, :] = feat_mat[feat_mat.shape[0] - 1, :]
+
+                self.current_feat_mats.append(current_feat_mat)
+
+        feats_tensors = []
+        targets_tensors = []
+        for i in range(len(self.current_feat_mats)):
+            feats_tensor = torch.FloatTensor(self.current_feat_mats[i][self.current_feat_idx:self.current_feat_idx + self.left_context + self.right_context + 1, :])
+            feats_tensor = feats_tensor.view((self.left_context + self.right_context + 1, -1))
+            feats_tensors.append(feats_tensor)
+
+            # Target is identical to feature tensor
+            target_tensor = feats_tensor.clone()
+            targets_tensors.append(target_tensor)
+
+        # Update where we are in the feature matrix
+        self.current_feat_idx += 1
+        if self.current_feat_idx == len(self.current_feat_mats[0]) - self.left_context - self.right_context:
+            self.current_utt_id = None
+            self.current_feat_mats = None
+            self.current_feat_idx = 0
+            self.current_utt_idx += 1
+
+        if idx == len(self) - 1:
+            # We've seen all of the data (i.e. one epoch) -- shuffle SCP list in place
+            self.shuffle_scp_lines()
+            self.current_utt_idx = 0
+
+        return (feats_tensors, targets_tensors)
+
+    def shuffle_scp_lines(self):
+        # Shuffle SCP lines in place by same ordering
+        self.scp_lines = [list(x) for x in zip(*sorted(zip(self.scp_lines)))][0]
