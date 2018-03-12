@@ -69,16 +69,19 @@ class CNNMultidecoder(nn.Module):
             enc_kernel_size = enc_kernel_sizes[idx]
             enc_downsample_size = enc_downsample_sizes[idx]
 
+            # Pad signal to avoid edge effects in output
+            padding = enc_kernel_size - 1 
             self.encoder_conv_layers["conv2d_%d" % idx] = nn.Conv2d(current_channels,
                                                                     enc_channel_size,
-                                                                    enc_kernel_size)
+                                                                    enc_kernel_size,
+                                                                    padding=padding)
             self.init_weights(self.encoder_conv_layers["conv2d_%d" % idx], "conv2d")
             current_channels = enc_channel_size
 
             # Formula from http://pytorch.org/docs/master/nn.html#conv2d
-            # Assumes stride = 1, padding = 0, dilation = 1
-            current_height = (current_height - (enc_kernel_size - 1) - 1) + 1
-            current_width = (current_width - (enc_kernel_size - 1) - 1) + 1
+            # Assumes stride = 1, dilation = 1
+            current_height = (current_height + (2 * padding) - (enc_kernel_size - 1) - 1) + 1
+            current_width = (current_width + (2 * padding) - (enc_kernel_size - 1) - 1) + 1
             
             if self.use_batch_norm:
                 self.encoder_conv_layers["batchnorm2d_%d" % idx] = nn.BatchNorm2d(enc_channel_size)
@@ -178,20 +181,16 @@ class CNNMultidecoder(nn.Module):
                     current_height = current_height     # No change in time dimension!
                     current_width = current_width * dec_upsample_size 
 
-                # Re-pad signal to "de-convolve"
-                # https://pgaleone.eu/neural-networks/2016/11/24/convolutional-autoencoders/
-                padding = dec_kernel_size - 1 
                 output_channels = 1 if idx == len(dec_channel_sizes) - 1 else dec_channel_sizes[idx + 1]
+
                 self.decoder_deconv_layers[decoder_class]["conv2d_%d" % idx] = nn.Conv2d(dec_channel_size,
                                                                         output_channels,
-                                                                        dec_kernel_size,
-                                                                        padding=padding)
-                self.init_weights(self.decoder_deconv_layers[decoder_class]["conv2d_%d" % idx], "conv2d")
+                                                                        dec_kernel_size)
 
                 # Formula for length from http://pytorch.org/docs/master/nn.html#conv2d
                 # Assumes stride = 1, dilation = 1
-                current_height = current_height + padding
-                current_width = current_width + padding
+                current_height = current_height - (dec_kernel_size - 1)
+                current_width = current_width - (dec_kernel_size - 1)
 
                 if self.use_batch_norm and idx != len(dec_channel_sizes) - 1:
                     # Don't normalize if it's the output layer!
