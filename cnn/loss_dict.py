@@ -8,20 +8,28 @@ class LossDict(object):
         self.gan = gan
 
         # Set up hierarchical loss dict
-        self.decoder_class_losses = {}
+        self.decoder_class_losses = dict()
         self.elements_processed = {}
         for decoder_class in decoder_classes:
             self.elements_processed[decoder_class] = 0
 
-            self.decoder_class_losses[decoder_class] = {}
+            self.decoder_class_losses[decoder_class] = dict()
+            self.elements_processed[decoder_class] = dict()
 
             self.decoder_class_losses[decoder_class]["autoencoding_recon_loss"] = 0.0
+            self.elements_processed[decoder_class]["autoencoding_recon_loss"] = 0
+
             self.decoder_class_losses[decoder_class]["transformation_recon_loss"] = 0.0
+            self.elements_processed[decoder_class]["transformation_recon_loss"] = 0
+
             if domain_adversarial:
                 self.decoder_class_losses[decoder_class]["domain_adversarial_loss"] = 0.0
+                self.elements_processed[decoder_class]["domain_adversarial_loss"] = 0
             elif gan:
                 self.decoder_class_losses[decoder_class]["real_gan_loss"] = 0.0
+                self.elements_processed[decoder_class]["real_gan_loss"] = 0
                 self.decoder_class_losses[decoder_class]["fake_gan_loss"] = 0.0
+                self.elements_processed[decoder_class]["fake_gan_loss"] = 0
 
     def __str__(self):
         output_str = "Losses:\n"
@@ -29,7 +37,7 @@ class LossDict(object):
             output_str += "=> Class %s\n" % decoder_class
             class_loss = 0.0
             for loss_key in self.decoder_class_losses[decoder_class]:
-                element_count = self.elements_processed[decoder_class]
+                element_count = self.elements_processed[decoder_class][loss_key]
                 if element_count > 0:
                     current_loss = self.decoder_class_losses[decoder_class][loss_key] / element_count
                 else:
@@ -44,7 +52,7 @@ class LossDict(object):
         loss = 0.0
         for decoder_class in self.decoder_class_losses:
             for loss_key in self.decoder_class_losses[decoder_class]:
-                element_count = self.elements_processed[decoder_class]
+                element_count = self.elements_processed[decoder_class][loss_key]
                 if element_count > 0:
                     current_loss = self.decoder_class_losses[decoder_class][loss_key] / element_count
                 else:
@@ -53,6 +61,6 @@ class LossDict(object):
         return loss
 
     def add(self, decoder_class, losses):
-        self.elements_processed[decoder_class] += 1
         for loss_key in losses:
+            self.elements_processed[decoder_class][loss_key] += 1
             self.decoder_class_losses[decoder_class][loss_key] += losses[loss_key]
