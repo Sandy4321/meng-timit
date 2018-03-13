@@ -284,125 +284,7 @@ class CNNMultidecoder(nn.Module):
 
 
 
-# Multidecoder design with convolutional encoder/decoder layers that utilizes
-# variational Bayes lower bound
-class CNNVariationalMultidecoder(CNNMultidecoder):
-    def __init__(self, freq_dim=40,
-                       splicing=[5,5],
-                       enc_channel_sizes=[],
-                       enc_kernel_sizes=[],
-                       enc_downsample_sizes=[],
-                       enc_fc_sizes=[],
-                       latent_dim=512,
-                       dec_fc_sizes=[],
-                       dec_channel_sizes=[],
-                       dec_kernel_sizes=[],
-                       dec_upsample_sizes=[],
-                       activation="ReLU",
-                       decoder_classes=[""],
-                       use_batch_norm=False,
-                       weight_init="xavier_uniform"):
-        super(CNNVariationalMultidecoder, self).__init__(freq_dim=freq_dim,
-                                                         splicing=splicing,
-                                                         enc_channel_sizes=enc_channel_sizes,
-                                                         enc_kernel_sizes=enc_kernel_sizes,
-                                                         enc_downsample_sizes=enc_downsample_sizes,
-                                                         enc_fc_sizes=enc_fc_sizes,
-                                                         latent_dim=latent_dim,
-                                                         dec_fc_sizes=dec_fc_sizes,
-                                                         dec_channel_sizes=dec_channel_sizes,
-                                                         dec_kernel_sizes=dec_kernel_sizes,
-                                                         dec_upsample_sizes=dec_upsample_sizes,
-                                                         activation=activation,
-                                                         decoder_classes=decoder_classes,
-                                                         use_batch_norm=use_batch_norm,
-                                                         weight_init=weight_init)
-
-
-        # STEP 1: Overwrite end of Fully-connected Encoder stage
-        self.encoder_fc_layers.popitem()    # Pop activation stage
-        lin_final_key, lin_final = self.encoder_fc_layers.popitem()    # Pop fully-connected layer into latent space
-        current_fc_dim = lin_final.weight.size()[1]     # In-channels
-        self.encoder_fc = nn.Sequential(self.encoder_fc_layers)     # Rebuild encoder FC stage
-
-
-        # STEP 2: Latent Gaussian parameters
-        
-
-        self.latent_mu_layers = OrderedDict()
-        self.latent_mu_layers["lin"] = nn.Linear(current_fc_dim, self.latent_dim)
-        self.init_weights(self.latent_mu_layers["lin"], "linear")
-        self.latent_mu = nn.Sequential(self.latent_mu_layers)
-        
-        self.latent_logvar_layers = OrderedDict()
-        self.latent_logvar_layers["lin"] = nn.Linear(current_fc_dim, self.latent_dim)
-        self.init_weights(self.latent_logvar_layers["lin"], "linear")
-        self.latent_logvar = nn.Sequential(self.latent_logvar_layers)
-
-
-    
-    def encode(self, feats):
-        # Need to go layer-by-layer to get pooling indices
-        pooling_indices = []    
-        unpool_sizes = []
-        conv_encoded = feats
-        for i, (encoder_conv_layer_name, encoder_conv_layer) in enumerate(self.encoder_conv_layers.items()):
-            if "maxpool2d" in encoder_conv_layer_name:
-                unpool_sizes.append(conv_encoded.size())
-                conv_encoded, new_pooling_indices = encoder_conv_layer(conv_encoded)
-                pooling_indices.append(new_pooling_indices)
-            else:
-                conv_encoded = encoder_conv_layer(conv_encoded)
-        fc_input_size = conv_encoded.size()
-        conv_encoded_vec = conv_encoded.view(conv_encoded.size()[0], -1)
-        pre_latent = self.encoder_fc(conv_encoded_vec)
-
-        mu = self.latent_mu(pre_latent)
-        logvar = self.latent_logvar(pre_latent)
-        
-        return (mu, logvar, fc_input_size, unpool_sizes, pooling_indices)
-
-    def reparameterize(self, mu, logvar):
-        # Reparameterization trick from VAE paper
-        # https://arxiv.org/abs/1312.6114
-        if self.training:
-            std = logvar.mul(0.5).exp_()
-            eps = Variable(std.data.new(std.size()).normal_())
-            return eps.mul(std).add_(mu)
-        else:
-            return mu
-
-    def decode(self, z, decoder_class, fc_input_size, conv_input_sizes=[], unpool_sizes=[], pooling_indices=[]):
-        fc_decoded = self.decoder_fc[decoder_class](z)
-        fc_decoded_mat = fc_decoded.view(fc_input_size) 
-
-        # Need to go layer-by-layer to insert pooling indices into unpooling layers
-        output = fc_decoded_mat
-        for i, (decoder_deconv_layer_name, decoder_deconv_layer) in enumerate(self.decoder_deconv_layers[decoder_class].items()):
-            if "maxunpool2d" in decoder_deconv_layer_name:
-                current_pooling_indices = pooling_indices.pop()
-                current_unpool_size = unpool_sizes.pop()
-                output = decoder_deconv_layer(output,
-                                              current_pooling_indices,
-                                              output_size=current_unpool_size)
-            else:
-                output = decoder_deconv_layer(output)
-
-        return output
-    
-    def forward_decoder(self, feats, decoder_class):
-        mu, logvar, fc_input_size, unpool_sizes, pooling_indices = self.encode(feats.view(-1,
-                                                                               1,
-                                                                               self.time_dim,
-                                                                               self.freq_dim))
-        z = self.reparameterize(mu, logvar) 
-        return (self.decode(z, decoder_class, fc_input_size, unpool_sizes=unpool_sizes, pooling_indices=pooling_indices),
-                mu,
-                logvar)
-
-
-
-# Includes an adversarial classifier for picking IHM vs SDM1
+# Includes an adversarial classifier for picking clean vs. dirty
 class CNNDomainAdversarialMultidecoder(CNNMultidecoder):
     def __init__(self, freq_dim=40,
                        splicing=[5,5],
@@ -461,7 +343,7 @@ class CNNDomainAdversarialMultidecoder(CNNMultidecoder):
 
 
 
-# Includes an adversarial classifier for detecting real vs. fake IHM (or SDM1) utterances
+# Includes an adversarial classifier for detecting real vs. fake utterances in each domain
 class CNNGANMultidecoder(CNNMultidecoder):
     def __init__(self, freq_dim=40,
                        splicing=[5,5],
@@ -505,8 +387,7 @@ class CNNGANMultidecoder(CNNMultidecoder):
         self.gans = dict()
         for decoder_class in self.decoder_classes:
             self.gan_layers[decoder_class] = OrderedDict()
-            current_dim = self.freq_dim * self.time_dim
-            for i in range(len(self.gan_fc_sizes)):
+            current_dim = self.freq_dim * self.time_dim for i in range(len(self.gan_fc_sizes)):
                 next_dim = self.gan_fc_sizes[i]
                 self.gan_layers[decoder_class]["lin_%d" % i] = nn.Linear(current_dim, next_dim)
                 self.gan_layers[decoder_class]["%s_%d" % (self.gan_activation, i)] = getattr(nn, self.gan_activation)()

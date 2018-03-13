@@ -4,3 +4,23 @@ timit_dirty_single_rir
 
 ==> L1Loss:
 
+RECON_true_TRANS_true_ENC_C_64_64_64_64_K_3_3_3_3_P_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_K_3_3_3_3_P_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/GAN_FC__512_512_ACT_Sigmoid_K_5/train_gan.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.165372
+===> transformation_recon_loss: 0.326920
+===> real_gan_loss: 0.701747
+===> fake_gan_loss: 0.683921
+===> Total for class clean: 1.877959
+=> Class dirty
+===> autoencoding_recon_loss: 0.171367
+===> transformation_recon_loss: 0.291687
+===> real_gan_loss: 0.724944
+===> fake_gan_loss: 0.671236
+===> Total for class dirty: 1.859234
+TOTAL: 3.737193
+
+
+RECON_true_TRANS_true_ENC_C_64_64_64_64_K_3_3_3_3_P_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_K_3_3_3_3_P_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/GAN_FC__512_512_ACT_Sigmoid_K_2/train_gan.log

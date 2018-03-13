@@ -1,7 +1,7 @@
 export GAN_FC=( 512 512 )
 export GAN_FC_DELIM=$(printf "_%s" "${GAN_FC[@]}")
 export GAN_ACTIVATION=Sigmoid
-export GAN_K=5
+export GAN_K=2
 
 export EXPT_NAME="$EXPT_NAME/GAN_FC_${GAN_FC_DELIM}_ACT_${GAN_ACTIVATION}_K_${GAN_K}"
 
