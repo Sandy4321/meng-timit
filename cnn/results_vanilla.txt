@@ -1,0 +1,107 @@
+================================================================================
+timit_dirty_single_rir
+================================================================================
+
+==> MSELoss:
+
+RECON_true_TRANS_true_ENC_C__K__P__F_1024_1024/LATENT_256/DEC_F_1024_1024_C__K__P_/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.061719
+===> transformation_recon_loss: 0.112716
+===> Total for class clean: 0.174434
+=> Class dirty
+===> autoencoding_recon_loss: 0.058332
+===> transformation_recon_loss: 0.094643
+===> Total for class dirty: 0.152976
+TOTAL: 0.327410
+
+
+RECON_true_TRANS_true_ENC_C_64_K_3_P_0_F_512/LATENT_256/DEC_F_512_C_64_K_3_P_0/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.040159
+===> transformation_recon_loss: 0.092453
+===> Total for class clean: 0.132613
+=> Class dirty
+===> autoencoding_recon_loss: 0.032467
+===> transformation_recon_loss: 0.073284
+===> Total for class dirty: 0.105751
+TOTAL: 0.238364
+
+
+RECON_true_TRANS_true_ENC_C_64_64_64_64_K_3_3_3_3_P_2_2_0_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_K_3_3_3_3_P_2_0_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.027403
+===> transformation_recon_loss: 0.093551
+===> Total for class clean: 0.120955
+=> Class dirty
+===> autoencoding_recon_loss: 0.022940
+===> transformation_recon_loss: 0.069736
+===> Total for class dirty: 0.092676
+TOTAL: 0.213631
+
+
+
+==> L1Loss:
+
+RECON_true_TRANS_true_ENC_C_64_K_3_P_0_F_512/LATENT_256/DEC_F_512_C_64_K_3_P_0/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.101700
+===> transformation_recon_loss: 0.154832
+===> Total for class clean: 0.256533
+=> Class dirty
+===> autoencoding_recon_loss: 0.100867
+===> transformation_recon_loss: 0.139292
+===> Total for class dirty: 0.240159
+TOTAL: 0.496692
+
+
+RECON_true_TRANS_true_ENC_C_64_K_3_P_2_F_512/LATENT_256/DEC_F_512_C_64_K_3_P_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.098466
+===> transformation_recon_loss: 0.160773
+===> Total for class clean: 0.259239
+=> Class dirty
+===> autoencoding_recon_loss: 0.094198
+===> transformation_recon_loss: 0.137957
+===> Total for class dirty: 0.232154
+TOTAL: 0.491394
+
+
+RECON_true_TRANS_true_ENC_C_64_K_3_P_2_F_512/LATENT_1024/DEC_F_512_C_64_K_3_P_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.099667
+===> transformation_recon_loss: 0.161535
+===> Total for class clean: 0.261202
+=> Class dirty
+===> autoencoding_recon_loss: 0.095136
+===> transformation_recon_loss: 0.143097
+===> Total for class dirty: 0.238232
+TOTAL: 0.499434
+
+
+RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+RUNNING
+
+
+RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_1024_1024/LATENT_256/DEC_F_1024_1024_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
+
+RUNNING

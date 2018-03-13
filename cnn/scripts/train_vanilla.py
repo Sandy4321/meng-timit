@@ -32,6 +32,7 @@ learning_rate = float(os.environ["LEARNING_RATE"])
 l2_reg = float(os.environ["L2_REG"])
 use_reconstruction = True if os.environ["USE_RECONSTRUCTION"] == "true" else False
 use_transformation = True if os.environ["USE_TRANSFORMATION"] == "true" else False
+loss_func = os.environ["LOSS_FUNC"]
 on_gpu = torch.cuda.is_available()
 
 # Fix random seed for debugging
@@ -65,12 +66,12 @@ for decoder_class in decoder_classes:
     dev_scp_name = os.path.join(dev_scp_dir, "feats-norm.scp")
     dev_scps.append(dev_scp_name)
 
-# Set up loss functions
-mse_criterion = nn.MSELoss()
+# Set up loss function
+criterion = getattr(nn, loss_func)() 
 if on_gpu:
-    mse_criterion.cuda()
+    criterion.cuda()
 def reconstruction_loss(recon_x, x):
-    return mse_criterion(recon_x, x)
+    return criterion(recon_x, x)
 
 # Set up optimizer for the generator portion (multidecoder itself)
 generator_optimizer = getattr(optim, optimizer_name)(model.generator_parameters(),
@@ -159,9 +160,8 @@ def train(epoch):
                 recon_batch = model.forward_decoder(feats, decoder_class)
 
                 # Compute reconstruction loss and backward pass
-                # Retains graph so that multiple losses are passed before optimizer step
                 r_loss = reconstruction_loss(recon_batch, targets)
-                r_loss.backward(retain_graph=True)
+                r_loss.backward()
 
                 decoder_class_losses.add(decoder_class, {"autoencoding_recon_loss": r_loss.data[0]})
 
@@ -185,9 +185,8 @@ def train(epoch):
                 transformed_feats = model.forward_decoder(feats, other_decoder_class)
 
                 # Compute reconstruction loss and backward pass
-                # Retains graph so that multiple losses are passed before optimizer step
                 r_loss = reconstruction_loss(transformed_feats, targets_other)
-                r_loss.backward(retain_graph=True)
+                r_loss.backward()
                 
                 decoder_class_losses.add(decoder_class, {"transformation_recon_loss": r_loss.data[0]})
             
