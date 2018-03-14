@@ -114,4 +114,14 @@ TOTAL: 0.466668
 
 RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_1024_1024/LATENT_256/DEC_F_1024_1024_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla.log
 
-RUNNING
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.086095
+===> transformation_recon_loss: 0.188243
+===> Total for class clean: 0.274338
+=> Class dirty
+===> autoencoding_recon_loss: 0.074710
+===> transformation_recon_loss: 0.184790
+===> Total for class dirty: 0.259500
+TOTAL: 0.533838

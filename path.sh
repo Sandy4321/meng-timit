@@ -27,6 +27,8 @@ export RIRS=$SCRATCH/rirs
 mkdir -p $RIRS
 export FEATS=$SCRATCH/feats
 mkdir -p $FEATS
+export RECIPES=$SCRATCH/recipes/timit
+mkdir -p $RECIPES
 
 export STEPS=$MENG_ROOT/steps
 export UTILS=$MENG_ROOT/utils
