@@ -387,7 +387,8 @@ class CNNGANMultidecoder(CNNMultidecoder):
         self.gans = dict()
         for decoder_class in self.decoder_classes:
             self.gan_layers[decoder_class] = OrderedDict()
-            current_dim = self.freq_dim * self.time_dim for i in range(len(self.gan_fc_sizes)):
+            current_dim = self.freq_dim * self.time_dim
+            for i in range(len(self.gan_fc_sizes)):
                 next_dim = self.gan_fc_sizes[i]
                 self.gan_layers[decoder_class]["lin_%d" % i] = nn.Linear(current_dim, next_dim)
                 self.gan_layers[decoder_class]["%s_%d" % (self.gan_activation, i)] = getattr(nn, self.gan_activation)()

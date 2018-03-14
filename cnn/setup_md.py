@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.append("./")
 sys.path.append("./cnn")
-from cnn_md import CNNMultidecoder, CNNVariationalMultidecoder, CNNDomainAdversarialMultidecoder, CNNGANMultidecoder
+from cnn_md import CNNMultidecoder, CNNDomainAdversarialMultidecoder, CNNGANMultidecoder
 
 # Returns the instantiated model based on the current environment variables
 def setup_model(domain_adversarial=False, gan=False):
