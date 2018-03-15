@@ -1,11 +1,12 @@
 # Container to easily track and display multiple loss values for different
 # decoder classes over time
 class LossDict(object):
-    def __init__(self, decoder_classes, domain_adversarial=False, gan=False):
+    def __init__(self, decoder_classes, domain_adversarial=False, gan=False, denoiser=False):
         super().__init__()
 
         self.domain_adversarial = domain_adversarial
         self.gan = gan
+        self.denoiser = denoiser
 
         # Set up hierarchical loss dict
         self.decoder_class_losses = dict()
@@ -16,11 +17,13 @@ class LossDict(object):
             self.decoder_class_losses[decoder_class] = dict()
             self.elements_processed[decoder_class] = dict()
 
-            self.decoder_class_losses[decoder_class]["autoencoding_recon_loss"] = 0.0
-            self.elements_processed[decoder_class]["autoencoding_recon_loss"] = 0
+            if not self.denoiser or decoder_class == "clean":
+                self.decoder_class_losses[decoder_class]["autoencoding_recon_loss"] = 0.0
+                self.elements_processed[decoder_class]["autoencoding_recon_loss"] = 0
 
-            self.decoder_class_losses[decoder_class]["transformation_recon_loss"] = 0.0
-            self.elements_processed[decoder_class]["transformation_recon_loss"] = 0
+            if not self.denoiser or decoder_class == "dirty":
+                self.decoder_class_losses[decoder_class]["transformation_recon_loss"] = 0.0
+                self.elements_processed[decoder_class]["transformation_recon_loss"] = 0
 
             if domain_adversarial:
                 self.decoder_class_losses[decoder_class]["domain_adversarial_loss"] = 0.0

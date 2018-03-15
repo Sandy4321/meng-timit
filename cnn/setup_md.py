@@ -8,7 +8,7 @@ sys.path.append("./cnn")
 from cnn_md import CNNMultidecoder, CNNDomainAdversarialMultidecoder, CNNGANMultidecoder
 
 # Returns the instantiated model based on the current environment variables
-def setup_model(domain_adversarial=False, gan=False):
+def setup_model(domain_adversarial=False, gan=False, denoiser=False):
     # Set up features
     feat_dim = int(os.environ["FEAT_DIM"])
     left_context = int(os.environ["LEFT_CONTEXT"])
@@ -55,10 +55,16 @@ def setup_model(domain_adversarial=False, gan=False):
             dec_upsample_sizes.append(int(res_str))
 
     activation = os.environ["ACTIVATION_FUNC"]
-    decoder_classes = []
-    for res_str in os.environ["DECODER_CLASSES_DELIM"].split("_"):
-        if len(res_str) > 0:
-            decoder_classes.append(res_str)
+
+    # If we're running as a denoiser, only keep the clean class
+    if denoiser:
+        decoder_classes = ["clean"]
+    else:
+        decoder_classes = []
+        for res_str in os.environ["DECODER_CLASSES_DELIM"].split("_"):
+            if len(res_str) > 0:
+                decoder_classes.append(res_str)
+
     use_batch_norm = True if os.environ["USE_BATCH_NORM"] == "true" else False
     weight_init = os.environ["WEIGHT_INIT"]
     
@@ -143,12 +149,17 @@ def setup_model(domain_adversarial=False, gan=False):
 
 
 
-def best_ckpt_path(domain_adversarial=False, gan=False):
+def best_ckpt_path(domain_adversarial=False, gan=False, denoiser=False):
     model_dir = os.environ["MODEL_DIR"]
+
     if domain_adversarial:
-        ckpt_path = os.path.join(model_dir, "best_md_domain.pth.tar")
+        model_name = "best_md_domain"
     elif gan:
-        ckpt_path = os.path.join(model_dir, "best_md_gan.pth.tar")
+        model_name = "best_md_gan"
     else:
-        ckpt_path = os.path.join(model_dir, "best_md_vanilla.pth.tar")
-    return ckpt_path
+        model_name = "best_md_vanilla"
+
+    if denoiser:
+        model_name += "_denoiser"
+
+    return os.path.join(model_dir, "%s.pth.tar" % model_name)
