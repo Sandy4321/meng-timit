@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p gpu
+#SBATCH -p sm
 #SBATCH -n1
 #SBATCH -N1-1
 #SBATCH -c 4
@@ -7,7 +7,6 @@
 #SBATCH --mem=32768
 #SBATCH --time=24:00:00
 #SBATCH -J augment_vanilla
-#SBATCH --exclude=sls-sm-[5]
 
 echo "STARTING VANILLA MULTIDECODER DATA AUGMENTATION JOB"
 

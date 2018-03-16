@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p gpu
+#SBATCH -p sm
 #SBATCH -n1
 #SBATCH -N1-1
 #SBATCH -c 30
@@ -29,11 +29,13 @@ echo "Environment set up."
 
 recipe_log_dir=$LOGS/recipes
 
-train_log=$recipe_log_dir/${recipe_name}-train.log
-if [ -f $train_log ]; then
-    # Move old log
-    mv $train_log $recipe_log_dir/${recipe_name}-train-$(date +"%F_%T%z").log
-fi
+cd recipes/$recipe_name
+
+# train_log=$recipe_log_dir/${recipe_name}-train.log
+# if [ -f $train_log ]; then
+#     # Move old log
+#     mv $train_log $recipe_log_dir/${recipe_name}-train-$(date +"%F_%T%z").log
+# fi
 
 eval_log=$recipe_log_dir/${recipe_name}-eval.log
 if [ -f $eval_log ]; then
@@ -41,9 +43,7 @@ if [ -f $eval_log ]; then
     mv $eval_log $recipe_log_dir/${recipe_name}-eval-$(date +"%F_%T%z").log
 fi
 
-cd recipes/$recipe_name
-
-./train.sh &> $train_log || exit 1
+# ./train.sh &> $train_log || exit 1
 ./eval.sh &> $eval_log || exit 1
 
 echo "Done running recipe $recipe_name"

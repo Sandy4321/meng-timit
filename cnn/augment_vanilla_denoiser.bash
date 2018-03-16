@@ -6,31 +6,30 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32768
 #SBATCH --time=24:00:00
-#SBATCH -J augment_gan
+#SBATCH -J augment_vanilla_denoiser
 
-echo "STARTING GAN MULTIDECODER DATA AUGMENTATION JOB"
+echo "STARTING VANILLA DENOISING MULTIDECODER DATA AUGMENTATION JOB"
 
 . ./path.sh
 . ./cnn/base_config.sh
-. ./cnn/gan_config.sh
 
 echo "Setting up environment..."
 export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/lib64:$LD_LIBRARY_PATH
 source activate $AUGMENT_ENV
 echo "Environment set up."
 
-augment_log=$LOG_DIR/augment_gan.log
+augment_log=$LOG_DIR/augment_vanilla_denoiser.log
 if [ -f $augment_log ]; then
     # Move old log
-    mv $augment_log $LOG_DIR/augment_gan-$(date +"%F_%T%z").log
+    mv $augment_log $LOG_DIR/augment_vanilla_denoiser-$(date +"%F_%T%z").log
 fi
 
-augment_dir=$AUGMENTED_DATA_DIR/gan
+augment_dir=$AUGMENTED_DATA_DIR/vanilla_denoiser
 mkdir -p $augment_dir/train
 mkdir -p $augment_dir/dev
 mkdir -p $augment_dir/test
 
-python3 cnn/scripts/augment_gan.py &> $augment_log
+python3 cnn/scripts/augment_vanilla_denoiser.py &> $augment_log
 
 echo "Undoing CMVN..."
 for data_dir in train dev test; do
@@ -45,4 +44,4 @@ for data_dir in train dev test; do
     echo "Done processing $data_dir data"
 done
 
-echo "DONE GAN MULTIDECODER DATA AUGMENTATION JOB"
+echo "DONE VANILLA DENOISING MULTIDECODER DATA AUGMENTATION JOB"

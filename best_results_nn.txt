@@ -32,7 +32,7 @@ Single RIR dirty:
 
 
 
-Single RIR 3/14
+Single RIR 3/14 augmented
 /data/sls/scratch/atitus5/meng//augmented_data/cnn/timit_dirty_single_rir/LOSS_L1Loss/RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/vanilla
 ===============================================================================
 
@@ -47,3 +47,25 @@ Single RIR dirty:
 Augmented:
 %WER 24.3 | 400 15057 | 79.9 15.1 5.0 4.2 24.3 99.8 | -0.796 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_augmented_dev_it6/score_5/ctm_39phn.filt.sys
 %WER 26.2 | 192 7215 | 77.3 16.3 6.4 3.5 26.2 100.0 | -0.527 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_augmented_test_it6/score_7/ctm_39phn.filt.sys
+
+
+
+Single RIR 3/14 enhancement
+/data/sls/scratch/atitus5/meng//augmented_data/cnn/timit_dirty_single_rir/LOSS_L1Loss/RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/vanilla
+===============================================================================
+
+Clean:
+%WER 17.5 | 400 15057 | 86.0 10.6 3.5 3.5 17.5 99.0 | -1.049 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_clean_dev_it6/score_4/ctm_39phn.filt.sys
+%WER 19.0 | 192 7215 | 83.6 11.7 4.7 2.6 19.0 99.5 | -0.466 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_clean_test_it6/score_7/ctm_39phn.filt.sys
+
+Reconstructed clean:
+%WER 22.8 | 400 15057 | 81.3 14.0 4.7 4.1 22.8 99.8 | -0.456 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_reconstructed_dev_it6/score_7/ctm_39phn.filt.sys
+%WER 24.4 | 192 7215 | 79.0 15.6 5.4 3.4 24.4 100.0 | -0.421 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_reconstructed_test_it6/score_8/ctm_39phn.filt.sys
+
+Single RIR dirty
+%WER 81.1 | 400 15057 | 21.8 33.2 45.1 2.8 81.1 100.0 | -4.235 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_dirty_dev_it6/score_4/ctm_39phn.filt.sys
+%WER 80.8 | 192 7215 | 21.5 33.7 44.7 2.4 80.8 100.0 | -4.239 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_dirty_test_it6/score_4/ctm_39phn.filt.sys
+
+Enhanced dirty
+%WER 35.2 | 400 15057 | 70.1 21.8 8.2 5.3 35.2 100.0 | -0.635 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_enhanced_dev_it6/score_10/ctm_39phn.filt.sys
+%WER 36.1 | 192 7215 | 68.1 22.6 9.3 4.2 36.1 100.0 | -0.751 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_enhanced_test_it6/score_11/ctm_39phn.filt.sys
