@@ -44,4 +44,7 @@ for data_dir in train dev test; do
     echo "Done processing $data_dir data"
 done
 
+echo "Setting up recipe..."
+./setup_enhancement_recipe.sh single_rir_vanilla_denoiser_3_16 single_rir_baseline_dirty $augment_dir
+
 echo "DONE VANILLA DENOISING MULTIDECODER DATA AUGMENTATION JOB"

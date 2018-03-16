@@ -31,19 +31,12 @@ recipe_log_dir=$LOGS/recipes
 
 cd recipes/$recipe_name
 
-train_log=$recipe_log_dir/${recipe_name}-train.log
-if [ -f $train_log ]; then
-    # Move old log
-    mv $train_log $recipe_log_dir/${recipe_name}-train-$(date +"%F_%T%z").log
-fi
-
 eval_log=$recipe_log_dir/${recipe_name}-eval.log
 if [ -f $eval_log ]; then
     # Move old log
     mv $eval_log $recipe_log_dir/${recipe_name}-eval-$(date +"%F_%T%z").log
 fi
 
-./train.sh &> $train_log || exit 1
 ./eval.sh &> $eval_log || exit 1
 
 echo "Done running recipe $recipe_name"
