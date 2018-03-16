@@ -394,7 +394,8 @@ class CNNGANMultidecoder(CNNMultidecoder):
                 self.gan_layers[decoder_class]["%s_%d" % (self.gan_activation, i)] = getattr(nn, self.gan_activation)()
                 current_dim = next_dim
             self.gan_layers[decoder_class]["lin_final"] = nn.Linear(current_dim, 1)
-            self.gan_layers[decoder_class]["Sigmoid_final"] = nn.Sigmoid() 
+            # Skip in favor of more numerically stable BCEWithLogitsLoss
+            # self.gan_layers[decoder_class]["Sigmoid_final"] = nn.Sigmoid() 
             self.gans[decoder_class] = nn.Sequential(self.gan_layers[decoder_class])
             self.add_module("gan_%s" % decoder_class, self.gans[decoder_class])
 
@@ -406,3 +407,73 @@ class CNNGANMultidecoder(CNNMultidecoder):
 
     def forward_gan(self, feats, decoder_class):
         return self.gans[decoder_class](feats.view((-1, self.time_dim * self.freq_dim)))
+
+
+# Includes a phone classifier
+class CNNPhoneMultidecoder(CNNMultidecoder):
+    def __init__(self, freq_dim=40,
+                       splicing=[5,5],
+                       enc_channel_sizes=[],
+                       enc_kernel_sizes=[],
+                       enc_downsample_sizes=[],
+                       enc_fc_sizes=[],
+                       latent_dim=512,
+                       dec_fc_sizes=[],
+                       dec_channel_sizes=[],
+                       dec_kernel_sizes=[],
+                       dec_upsample_sizes=[],
+                       activation="ReLU",
+                       decoder_classes=[""],
+                       use_batch_norm=False,
+                       weight_init="xavier_uniform",
+                       phone_fc_sizes=[],
+                       phone_activation="Sigmoid",
+                       num_phones=1):
+        super(CNNPhoneMultidecoder, self).__init__(freq_dim=freq_dim,
+                                                splicing=splicing,
+                                                enc_channel_sizes=enc_channel_sizes,
+                                                enc_kernel_sizes=enc_kernel_sizes,
+                                                enc_downsample_sizes=enc_downsample_sizes,
+                                                enc_fc_sizes=enc_fc_sizes,
+                                                latent_dim=latent_dim,
+                                                dec_fc_sizes=dec_fc_sizes,
+                                                dec_channel_sizes=dec_channel_sizes,
+                                                dec_kernel_sizes=dec_kernel_sizes,
+                                                dec_upsample_sizes=dec_upsample_sizes,
+                                                activation=activation,
+                                                decoder_classes=decoder_classes,
+                                                use_batch_norm=use_batch_norm,
+                                                weight_init=weight_init)
+        
+        self.phone_fc_sizes = phone_fc_sizes
+        self.phone_activation = phone_activation
+
+        # Construct simple linear phone classifier
+        self.phone_layers = OrderedDict()
+        current_dim = self.latent_dim
+        for i in range(len(self.phone_fc_sizes)):
+            next_dim = self.phone_fc_sizes[i]
+            self.phone_layers["lin_%d" % i] = nn.Linear(current_dim, next_dim)
+            self.phone_layers["%s_%d" % (self.phone_activation, i)] = getattr(nn, self.phone_activation)()
+            current_dim = next_dim
+        self.phone_layers["lin_final"] = nn.Linear(current_dim, self.num_phones)
+        self.phone_layers["LogSoftmax_final"] = nn.LogSoftmax()
+        self.phone_classifier = nn.Sequential(self.phone_layers[decoder_class])
+
+    def generator_parameters(self):
+        # Get parameters for generator and phone classifier
+        for param in self.phone_classifier.parameters():
+            yield param
+        for decoder_class in self.decoder_classes:
+            for param in self.decoder_parameters(decoder_class):
+                yield param
+        for param in self.encoder_parameters():
+            yield param
+
+    def forward_phone(self, feats):
+        latent, fc_input_size, unpool_sizes, pooling_indices = self.encode(feats.view(-1,
+                                                                           1,
+                                                                           self.time_dim,
+                                                                           self.freq_dim))
+
+        return self.phone_classifier(latent)

@@ -29,6 +29,8 @@ export FEATS=$SCRATCH/feats
 mkdir -p $FEATS
 export RECIPES=$SCRATCH/recipes/timit
 mkdir -p $RECIPES
+export MULTITASK_EXP=$SCRATCH/multitask_exp
+mkdir -p $MULTITASK_EXP
 
 export STEPS=$MENG_ROOT/steps
 export UTILS=$MENG_ROOT/utils

@@ -13,6 +13,11 @@ echo "STARTING VANILLA DENOISING MULTIDECODER DATA AUGMENTATION JOB"
 . ./path.sh
 . ./cnn/base_config.sh
 
+recipe_name=single_rir_vanilla_denoiser_3_16
+if [ $# -eq 1 ]; then
+    recipe_name=$1
+fi
+
 echo "Setting up environment..."
 export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/lib64:$LD_LIBRARY_PATH
 source activate $AUGMENT_ENV
@@ -35,16 +40,14 @@ echo "Undoing CMVN..."
 for data_dir in train dev test; do
     echo "Processing $data_dir data"
     for source_class in "${DECODER_CLASSES[@]}"; do
-        for target_class in "${DECODER_CLASSES[@]}"; do
-            echo "Processing source $source_class, target $target_class"
-            name=src_${source_class}-tar_${target_class}
-            apply-cmvn --norm-vars=true --reverse --utt2spk=ark:$CLEAN_FEATS/${data_dir}/utt2spk scp:$CLEAN_FEATS/${data_dir}/cmvn.scp scp:$augment_dir/${data_dir}/${name}-norm.scp ark,scp:$augment_dir/${data_dir}/${name}.ark,$augment_dir/${data_dir}/${name}.scp
-        done
+        echo "Processing source $source_class, target clean"
+        name=src_${source_class}-tar_clean
+        apply-cmvn --norm-vars=true --reverse --utt2spk=ark:$CLEAN_FEATS/${data_dir}/utt2spk scp:$CLEAN_FEATS/${data_dir}/cmvn.scp scp:$augment_dir/${data_dir}/${name}-norm.scp ark,scp:$augment_dir/${data_dir}/${name}.ark,$augment_dir/${data_dir}/${name}.scp
     done
     echo "Done processing $data_dir data"
 done
 
 echo "Setting up recipe..."
-./setup_enhancement_recipe.sh single_rir_vanilla_denoiser_3_16 single_rir_baseline_dirty $augment_dir
+./setup_enhancement_recipe.sh $recipe_name single_rir_baseline_dirty $augment_dir
 
 echo "DONE VANILLA DENOISING MULTIDECODER DATA AUGMENTATION JOB"

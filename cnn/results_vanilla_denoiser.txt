@@ -1,0 +1,43 @@
+================================================================================
+timit_dirty_single_rir
+================================================================================
+
+==> L1Loss:
+
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla_denoiser.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.147627
+===> Total for class clean: 0.147627
+=> Class dirty
+===> transformation_recon_loss: 0.270494
+===> Total for class dirty: 0.270494
+TOTAL: 0.418120
+
+
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_0_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_0/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla_denoiser.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.155029
+===> Total for class clean: 0.155029
+=> Class dirty
+===> transformation_recon_loss: 0.264095
+===> Total for class dirty: 0.264095
+TOTAL: 0.419124
+
+
+RECON_true_TRANS_true_ENC_C__K__P__F_256/LATENT_64/DEC_F_256_C__K__P_/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/train_vanilla_denoiser.log
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.249630
+===> Total for class clean: 0.249630
+=> Class dirty
+===> transformation_recon_loss: 0.314857
+===> Total for class dirty: 0.314857
+TOTAL: 0.564487

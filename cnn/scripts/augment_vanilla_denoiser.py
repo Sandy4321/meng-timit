@@ -219,7 +219,6 @@ for source_class in decoder_classes:
     
     augment_end_t = time.clock()
     print("\nProcessed source %s, target clean in %.3fs" % (source_class,
-                                                            target_class,
                                                             augment_end_t - augment_start_t),
           flush=True)
 augment_end_t = time.clock()
