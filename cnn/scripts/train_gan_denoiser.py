@@ -400,10 +400,12 @@ pretrain_loss_dict = train(0, train_adversary=False)
 print("\nPRETRAIN GENERATOR (EPOCH 0)", flush=True)
 print(pretrain_loss_dict, flush=True)
 
+'''
 print("Startin adversary pre-training (epoch 0)!", flush=True)
 pretrain_loss_dict = train(0, train_generator=False)
 print("\nPRETRAIN ADVERSARY (EPOCH 0)", flush=True)
 print(pretrain_loss_dict, flush=True)
+'''
 
 # Save initial checkpoint for our model
 state_obj = {
