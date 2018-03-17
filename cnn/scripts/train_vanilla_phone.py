@@ -42,6 +42,13 @@ if on_gpu:
 
 # Set up the model and associated checkpointing directory
 model = setup_model(phone=True)
+print(model, flush=True)
+
+# Count number of trainable parameters
+model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+params = sum([np.prod(p.size()) for p in model_parameters])
+print("Model has %d trainable parameters" % params, flush=True)
+
 if on_gpu:
     model.cuda()
 ckpt_path = best_ckpt_path(phone=True)
@@ -84,7 +91,7 @@ nll_criterion = nn.NLLLoss()
 if on_gpu:
     nll_criterion = nll_criterion.cuda()
 def class_loss(log_probs, target_class):
-    return nll_criterion(log_probs, target_class)
+    return nll_criterion(log_probs, target_class.view((-1)))
 
 # Set up optimizer for the generator portion (multidecoder itself)
 generator_optimizer = getattr(optim, optimizer_name)(model.generator_parameters(),
@@ -109,11 +116,11 @@ print("Using %d train features (%d batches)" % (len(train_dataset),
       flush=True)
 
 print("Setting up dev datasets...", flush=True)
-dev_dataset = KaldiParallelDataset(dev_feat_scps,
-                                   dev_phone_scp,
-                                   left_context=left_context,
-                                   right_context=right_context,
-                                   shuffle_utts=True)
+dev_dataset = KaldiParallelPhoneDataset(dev_feat_scps,
+                                        dev_phone_scp,
+                                        left_context=left_context,
+                                        right_context=right_context,
+                                        shuffle_utts=True)
 dev_loader = DataLoader(dev_dataset,
                         batch_size=batch_size,
                         shuffle=False,
@@ -319,7 +326,7 @@ def test(epoch, loader):
 best_dev_loss = float('inf')
 
 # Regularize via patience-based early stopping
-max_patience = 3
+max_patience = 5
 iterations_since_improvement = 0
 
 setup_end_t = time.clock()

@@ -38,7 +38,6 @@ export DECODER_CLASSES_DELIM=$(printf "_%s" "${DECODER_CLASSES[@]}")
 
 export CLEAN_DATASET=timit_clean
 export CLEAN_FEATS=$FEATS/$CLEAN_DATASET
-export CLEAN_RECIPE=$RECIPES
 
 export DIRTY_DATASET=timit_dirty_single_rir
 # export DIRTY_DATASET=timit_gaussian_5.0

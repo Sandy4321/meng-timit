@@ -1,13 +1,13 @@
 # Container to easily track and display multiple loss values for different
 # decoder classes over time
 class LossDict(object):
-    def __init__(self, decoder_classes, domain_adversarial=False, gan=False, denoiser=False, multitask=False):
+    def __init__(self, decoder_classes, domain_adversarial=False, gan=False, denoiser=False, phone=False):
         super().__init__()
 
         self.domain_adversarial = domain_adversarial
         self.gan = gan
         self.denoiser = denoiser
-        self.multitask = multitask
+        self.phone = phone
 
         # Set up hierarchical loss dict
         self.decoder_class_losses = dict()
@@ -36,7 +36,7 @@ class LossDict(object):
                 self.decoder_class_losses[decoder_class]["fake_gan_loss"] = 0.0
                 self.elements_processed[decoder_class]["fake_gan_loss"] = 0
 
-            if self.multitask:
+            if self.phone:
                 self.decoder_class_losses[decoder_class]["phone_loss"] = 0.0
                 self.elements_processed[decoder_class]["phone_loss"] = 0
 

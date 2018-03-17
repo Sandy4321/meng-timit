@@ -91,7 +91,6 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
         num_phones = int(os.environ["NUM_PHONES"])
 
     # Construct autoencoder with our parameters
-    print("Constructing model...", flush=True)
     if domain_adversarial:
         model = CNNDomainAdversarialMultidecoder(freq_dim=freq_dim,
                                 splicing=[left_context, right_context], 
@@ -164,14 +163,6 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
                                 decoder_classes=decoder_classes,
                                 weight_init=weight_init)
     
-    print("Done constructing model.", flush=True)
-    print(model, flush=True)
-    
-    # Count number of trainable parameters
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
-    print("Model has %d trainable parameters" % params, flush=True)
-
     return model
 
 

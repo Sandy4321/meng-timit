@@ -447,6 +447,7 @@ class CNNPhoneMultidecoder(CNNMultidecoder):
         
         self.phone_fc_sizes = phone_fc_sizes
         self.phone_activation = phone_activation
+        self.num_phones = num_phones
 
         # Construct simple linear phone classifier
         self.phone_layers = OrderedDict()
@@ -457,8 +458,8 @@ class CNNPhoneMultidecoder(CNNMultidecoder):
             self.phone_layers["%s_%d" % (self.phone_activation, i)] = getattr(nn, self.phone_activation)()
             current_dim = next_dim
         self.phone_layers["lin_final"] = nn.Linear(current_dim, self.num_phones)
-        self.phone_layers["LogSoftmax_final"] = nn.LogSoftmax()
-        self.phone_classifier = nn.Sequential(self.phone_layers[decoder_class])
+        self.phone_layers["LogSoftmax_final"] = nn.LogSoftmax(dim=1)
+        self.phone_classifier = nn.Sequential(self.phone_layers)
 
     def generator_parameters(self):
         # Get parameters for generator and phone classifier
@@ -470,7 +471,7 @@ class CNNPhoneMultidecoder(CNNMultidecoder):
         for param in self.encoder_parameters():
             yield param
 
-    def forward_phone(self, feats):
+    def forward_phones(self, feats):
         latent, fc_input_size, unpool_sizes, pooling_indices = self.encode(feats.view(-1,
                                                                            1,
                                                                            self.time_dim,

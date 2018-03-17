@@ -432,7 +432,8 @@ class KaldiParallelPhoneDataset(Dataset):
                 m, rows = struct.unpack('<bi', ark_fd.read(5))
                 n, cols = struct.unpack('<bi', ark_fd.read(5))
 
-                self.num_phones += rows
+                # Only 1 row -- num phones is columns
+                self.num_phones += cols
     
                 self.phone_scp_lines.append(scp_line)
 
@@ -490,6 +491,7 @@ class KaldiParallelPhoneDataset(Dataset):
             scp_line = self.scp_lines[-1][self.current_utt_idx]
             self.current_utt_id, self.current_phone_mat, self.ark_fds[-1] = read_next_utt(scp_line,
                                                                                           ark_fd=self.ark_fds[-1])
+            self.current_phone_mat = self.current_phone_mat.astype(int)
 
         feats_tensors = []
         targets_tensors = []
@@ -502,7 +504,7 @@ class KaldiParallelPhoneDataset(Dataset):
             target_tensor = feats_tensor.clone()
             targets_tensors.append(target_tensor)
 
-        phone_tensor = torch.LongTensor(self.current_phone_mat[self.current_feat_idx])
+        phone_tensor = torch.LongTensor([int(self.current_phone_mat[0, self.current_feat_idx])])
 
         # Update where we are in the feature matrix
         self.current_feat_idx += 1

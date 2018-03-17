@@ -45,6 +45,13 @@ if on_gpu:
 
 # Set up the model and associated checkpointing directory
 model = setup_model(gan=True)
+print(model, flush=True)
+    
+# Count number of trainable parameters
+model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+params = sum([np.prod(p.size()) for p in model_parameters])
+print("Model has %d trainable parameters" % params, flush=True)
+
 if on_gpu:
     model.cuda()
 ckpt_path = best_ckpt_path(gan=True)

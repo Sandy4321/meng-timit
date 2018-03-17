@@ -1,7 +1,7 @@
 export KALDI_ROOT=/data/sls/r/u/atitus5/scratch/kaldi 
 [ -f $KALDI_ROOT/tools/env.sh ] && . $KALDI_ROOT/tools/env.sh 
 export MENG_ROOT=$PWD 
-export PATH=$MENG_ROOT/utils/:$KALDI_ROOT/tools/openfst/bin:$MENG_ROOT:$PATH 
+export PATH=$PWD/utils/:$KALDI_ROOT/tools/openfst/bin:$KALDI_ROOT/tools/irstlm/bin/:$MENG_ROOT:$PATH
 [ ! -f $KALDI_ROOT/tools/config/common_path.sh ] && echo >&2 "The standard file $KALDI_ROOT/tools/config/common_path.sh is not present -> Exit!" && exit 1 
 . $KALDI_ROOT/tools/config/common_path.sh 
 export LC_ALL=C 
