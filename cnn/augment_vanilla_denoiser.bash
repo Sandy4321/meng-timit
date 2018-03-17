@@ -48,6 +48,8 @@ for data_dir in train dev test; do
 done
 
 echo "Setting up recipe..."
-./setup_enhancement_recipe.sh $recipe_name single_rir_baseline_dirty $augment_dir
+# dirty_recipe=single_rir_baseline_dirty
+dirty_recipe=100_rir_baseline_dirty
+./setup_enhancement_recipe.sh $recipe_name $dirty_recipe $augment_dir
 
 echo "DONE VANILLA DENOISING MULTIDECODER DATA AUGMENTATION JOB"

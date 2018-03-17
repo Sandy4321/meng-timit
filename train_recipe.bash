@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32768
 #SBATCH --time=48:00:00
-#SBATCH -J eval_recipe
+#SBATCH -J train_recipe
 
 . ./path.sh
 
@@ -31,12 +31,12 @@ recipe_log_dir=$LOGS/recipes
 
 cd recipes/$recipe_name
 
-eval_log=$recipe_log_dir/${recipe_name}-eval.log
-if [ -f $eval_log ]; then
+train_log=$recipe_log_dir/${recipe_name}-train.log
+if [ -f $train_log ]; then
     # Move old log
-    mv $eval_log $recipe_log_dir/${recipe_name}-eval-$(date +"%F_%T%z").log
+    mv $train_log $recipe_log_dir/${recipe_name}-train-$(date +"%F_%T%z").log
 fi
 
-./eval.sh &> $eval_log || exit 1
+./train.sh &> $train_log || exit 1
 
-echo "Done evaluating recipe $recipe_name"
+echo "Done training recipe $recipe_name"

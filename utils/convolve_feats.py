@@ -65,69 +65,75 @@ for rir_path in rir_paths:
     rirs.append(rir_data_float)
 
 print("Reading in base WAVs, convolving with RIR WAVs and writing to new WAV SCP...", flush=True)
-with open(os.path.join(data_dir, "wav.scp"), 'w') as wav_scp:
-    # Check number of lines in base WAV SCP, so we can print progress updates
-    with open(base_wav_scp, 'r') as base_wav:
-        completed_process = sp.run("wc -l", stdin=base_wav, stdout=sp.PIPE, stderr=sp.STDOUT, shell=True, check=True)
-        num_wavs = int(completed_process.stdout)
+with open(os.path.join(data_dir, "wav2rir.txt"), 'w') as wav2rir:
+    # Write mapping of wav file to the RIR file that was convolved with it for debugging purposes
+    with open(os.path.join(data_dir, "wav.scp"), 'w') as wav_scp:
+        # Check number of lines in base WAV SCP, so we can print progress updates
+        with open(base_wav_scp, 'r') as base_wav:
+            completed_process = sp.run("wc -l", stdin=base_wav, stdout=sp.PIPE, stderr=sp.STDOUT, shell=True, check=True)
+            num_wavs = int(completed_process.stdout)
 
-    update_interval = num_wavs // 20
-    with open(base_wav_scp, 'r') as base_wav:
-        wavs_processed = 0
-        for line in base_wav:
-            if "|" in line:
-                # Need to run command to get a temporary WAV file
-                command = " ".join(line.rstrip('\n').rstrip('|').split(" ")[1:])
-                tmp_wav_path = os.path.join(data_dir, "tmp.wav")
-                with open(tmp_wav_path, 'w') as tmp_wav:
-                    completed_process = sp.run(command, stdout=tmp_wav, stderr=sp.STDOUT, shell=True, check=True)
+        update_interval = num_wavs // 20
+        with open(base_wav_scp, 'r') as base_wav:
+            wavs_processed = 0
+            for line in base_wav:
+                if "|" in line:
+                    # Need to run command to get a temporary WAV file
+                    command = " ".join(line.rstrip('\n').rstrip('|').split(" ")[1:])
+                    tmp_wav_path = os.path.join(data_dir, "tmp.wav")
+                    with open(tmp_wav_path, 'w') as tmp_wav:
+                        completed_process = sp.run(command, stdout=tmp_wav, stderr=sp.STDOUT, shell=True, check=True)
 
-                # Read in temp WAV file, then delete it
-                fs, wav_data_pcm = wavfile.read(tmp_wav_path)
-                os.remove(tmp_wav_path)
-            else:
-                # Read in WAV file
-                wav_path = line.rstrip('\n').split(" ")[1]
-                fs, wav_data = wavfile.read(wav_path)
-            
-            # Convert to float
-            wav_data_float = pcmToFloat(wav_data_pcm)
-            
-            # print("Read in %d frames of WAV data (F_s: %d)" % (wav_data_float.shape[0], fs), flush=True)
+                    # Read in temp WAV file, then delete it
+                    fs, wav_data_pcm = wavfile.read(tmp_wav_path)
+                    os.remove(tmp_wav_path)
+                else:
+                    # Read in WAV file
+                    wav_path = line.rstrip('\n').split(" ")[1]
+                    fs, wav_data = wavfile.read(wav_path)
+                
+                # Convert to float
+                wav_data_float = pcmToFloat(wav_data_pcm)
+                
+                # print("Read in %d frames of WAV data (F_s: %d)" % (wav_data_float.shape[0], fs), flush=True)
 
-            # Convolve WAV data with randomly chosen RIR
-            # Perform full convolution and then chop off end effects, so that the output result
-            # is same length as original WAV and is time-aligned to it (still contains edge
-            # effects at beginning, though)
-            rir_idx = random.randint(0, len(rirs) - 1)
-            current_rir = rirs[rir_idx]
-            convolved_wav_float = np.convolve(wav_data_float, current_rir, mode='full')[:len(wav_data_float)]
+                # Convolve WAV data with randomly chosen RIR
+                # Perform full convolution and then chop off end effects, so that the output result
+                # is same length as original WAV and is time-aligned to it (still contains edge
+                # effects at beginning, though)
+                rir_idx = random.randint(0, len(rirs) - 1)
+                current_rir = rirs[rir_idx]
+                convolved_wav_float = np.convolve(wav_data_float, current_rir, mode='full')[:len(wav_data_float)]
 
-            # Handle clipping
-            clip_factor = 1.1   # Can be hand-tuned; however, must be strictly > 1
-            convolved_wav_float_norm = convolved_wav_float / (max(convolved_wav_float) * clip_factor)
+                # Handle clipping
+                clip_factor = 1.1   # Can be hand-tuned; however, must be strictly > 1
+                convolved_wav_float_norm = convolved_wav_float / (max(convolved_wav_float) * clip_factor)
 
-            # Convert back to PCM
-            output_type = np.int16
-            convolved_wav_pcm = floatToPCM(convolved_wav_float, dtype=output_type)
+                # Convert back to PCM
+                output_type = np.int16
+                convolved_wav_pcm = floatToPCM(convolved_wav_float, dtype=output_type)
 
-            if debug:
-                # Sanity check for clipping
-                range_info = np.iinfo(output_type)
-                assert(max(convolved_wav_pcm) < range_info.max)
-                assert(min(convolved_wav_pcm) > range_info.min)
+                if debug:
+                    # Sanity check for clipping
+                    range_info = np.iinfo(output_type)
+                    assert(max(convolved_wav_pcm) < range_info.max)
+                    assert(min(convolved_wav_pcm) > range_info.min)
 
-            # Write convolved WAV file
-            utt_id = line.split(" ")[0]   # Just use same utterance ID as original for now
-            new_wav_path = os.path.join(wav_dir, "%s.wav" % utt_id)
-            wavfile.write(new_wav_path, fs, convolved_wav_pcm)
+                # Write convolved WAV file
+                utt_id = line.split(" ")[0]   # Just use same utterance ID as original for now
+                new_wav_path = os.path.join(wav_dir, "%s.wav" % utt_id)
+                wavfile.write(new_wav_path, fs, convolved_wav_pcm)
 
-            # Add entry to WAV SCP
-            wav_scp.write("%s %s\n" % (utt_id, new_wav_path))
+                # Add entry to WAV SCP
+                wav_scp.write("%s %s\n" % (utt_id, new_wav_path))
 
-            # Print updates, if any
-            wavs_processed += 1
-            if wavs_processed % update_interval == 0:
-                print("Processed %d/%d lines (%.1f%%)" % (wavs_processed, num_wavs, 100.0 * wavs_processed / num_wavs), flush=True)
+                # Add mapping entry to wav2rir
+                rir_path = rir_paths[rir_idx]
+                wav2rir.write("%s %s\n" % (utt_id, rir_path))
 
-print("Done convolving WAVs!", flush=True)
+                # Print updates, if any
+                wavs_processed += 1
+                if wavs_processed % update_interval == 0:
+                    print("Processed %d/%d lines (%.1f%%)" % (wavs_processed, num_wavs, 100.0 * wavs_processed / num_wavs), flush=True)
+
+    print("Done convolving WAVs!", flush=True)

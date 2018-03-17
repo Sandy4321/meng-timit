@@ -2,7 +2,7 @@
 #SBATCH -p sm
 #SBATCH -n1
 #SBATCH -N1-1
-#SBATCH -c 4
+#SBATCH -c 16
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32768
 #SBATCH --time=24:00:00
@@ -110,7 +110,7 @@ if [ $stage -lt 2 ]; then
 
             # Score results
             echo "Scoring $subdir results for $source_class..."
-            num_jobs=1
+            num_jobs=16
             echo $num_jobs > $dir/num_jobs
             $STEPS/score.sh $CLEAN_RECIPE/data/$subdir $lang $dir $model >> $train_log 2>&1
 
