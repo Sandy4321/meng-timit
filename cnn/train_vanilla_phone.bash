@@ -91,28 +91,33 @@ if [ $stage -lt 2 ]; then
             dir=$MULTITASK_DIR/$subdir/$source_class
             mkdir -p $dir
 
-            # Evaluate model, print log probabilities and generate lattices
-            # Use only one job since TIMIT is fairly small
-            python3 cnn/scripts/eval_vanilla_phone.py $subdir $source_class \
-                | $UTILS/batch2ark.py \
-                | latgen-faster-mapped \
-                --max-active=7000 \
-                --beam=15 \
-                --lattice-beam=7 \
-                --acoustic-scale=0.1 \
-                --allow-partial=true \
-                --word-symbol-table=$lang/words.txt \
-                $model \
-                $lang/HCLG.fst \
-                ark:- \
-                "ark:|gzip -c > $dir/lat.1.gz" \
-                2> $dir/decode-1.log
+            if [ ! -f $dir/lat.1.gz ]; then
+                # Evaluate model, print log probabilities and generate lattices
+                # Use only one job since TIMIT is fairly small
+                echo "Generating lattice..."
+                python3 cnn/scripts/eval_vanilla_phone.py $subdir $source_class \
+                    | $UTILS/batch2ark.py \
+                    | latgen-faster-mapped \
+                    --max-active=7000 \
+                    --beam=15 \
+                    --lattice-beam=7 \
+                    --acoustic-scale=0.1 \
+                    --allow-partial=true \
+                    --word-symbol-table=$lang/words.txt \
+                    $model \
+                    $lang/HCLG.fst \
+                    ark:- \
+                    "ark:|gzip -c > $dir/lat.1.gz" \
+                    2> $dir/decode-1.log
+            else
+                echo "Lattice already generated; skipping"
+            fi
 
             # Score results
             echo "Scoring $subdir results for $source_class..."
-            num_jobs=16
+            num_jobs=10
             echo $num_jobs > $dir/num_jobs
-            $STEPS/score.sh $CLEAN_RECIPE/data/$subdir $lang $dir $model >> $train_log 2>&1
+            local/score.sh $CLEAN_RECIPE/data/$subdir $lang $dir $model >> $train_log 2>&1
 
             # Print best results
             echo "RESULTS FOR $subdir, class $source_class"
