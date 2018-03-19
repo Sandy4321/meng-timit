@@ -1,4 +1,4 @@
-export PHONE_FC=( )
+export PHONE_FC=( 256 )
 export PHONE_FC_DELIM=$(printf "_%s" "${PHONE_FC[@]}")
 export PHONE_ACTIVATION=ReLU
 
@@ -18,3 +18,7 @@ mkdir -p $LOG_DIR
 
 export MULTITASK_DIR=${MULTITASK_EXP}/cnn/$DIRTY_DATASET/$EXPT_NAME
 mkdir -p $MULTITASK_DIR
+
+# For data augmentation
+export AUGMENTED_DATA_DIR=${AUGMENTED_DATA}/cnn/$DIRTY_DATASET/$EXPT_NAME
+mkdir -p $AUGMENTED_DATA_DIR

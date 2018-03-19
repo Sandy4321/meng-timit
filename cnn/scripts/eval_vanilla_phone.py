@@ -64,29 +64,30 @@ loader = DataLoader(dataset,
 # Print out as Hao format data 
 model.eval()
 for batch_idx, (feats, _, utt_ids) in enumerate(loader):
-    # Processing one utt ID at a time
+    # Only one utterance at once
     utt_id = utt_ids[0]
-    print(utt_id, flush=True)
 
     # Splice in features
     feats_numpy = feats.numpy().reshape((-1, feat_dim))
     num_frames = feats_numpy.shape[0]
-    decoded_feats = np.empty((num_frames, feat_dim))
+    spliced_feats = np.empty((num_frames, time_dim, feat_dim))
     for i in range(num_frames):
         frame_spliced = np.zeros((time_dim, feat_dim))
         frame_spliced[left_context - min(i, left_context):left_context, :] = feats_numpy[i - min(i, left_context):i, :]
         frame_spliced[left_context, :] = feats_numpy[i, :]
         frame_spliced[left_context + 1:left_context + 1 + min(num_frames - i - 1, right_context), :] = feats_numpy[i + 1:i + 1 + min(num_frames - i - 1, right_context), :]
+
+        spliced_feats[i, :, :] = frame_spliced
         
-        frame_spliced_tensor = torch.FloatTensor(frame_spliced)
-        if on_gpu:
-            frame_spliced_tensor = frame_spliced_tensor.cuda()
-        frame_spliced_tensor = Variable(frame_spliced_tensor, volatile=True)
+    spliced_feats_tensor = torch.FloatTensor(spliced_feats)
+    if on_gpu:
+        spliced_feats_tensor = spliced_feats_tensor.cuda()
+    spliced_feats_tensor = Variable(spliced_feats_tensor, volatile=True)
 
-        log_probs = model.forward_phones(frame_spliced_tensor)
-
-        log_probs_str = " ".join(list(map(str, log_probs.cpu().data.numpy().reshape((-1)))))
+    log_probs = model.forward_phones(spliced_feats_tensor)
+    print(utt_id, flush=True)
+    for i in range(num_frames):
+        log_probs_str = " ".join(list(map(str, log_probs.cpu().data.numpy()[i, :].reshape((-1)))))
         print(log_probs_str, flush=True)
-
     # Print termination character for Hao format
     print(".", flush=True)

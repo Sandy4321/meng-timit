@@ -139,26 +139,27 @@ def augment(loader, augmented_dir, source_class, target_class):
             # Run batch through target decoder
             feats_numpy = feats.numpy().reshape((-1, freq_dim))
             num_frames = feats_numpy.shape[0]
-            decoded_feats = np.empty((num_frames, freq_dim))
+            frame_spliced_all = np.empty((num_frames, time_dim, freq_dim))
             for i in range(num_frames):
                 frame_spliced = np.zeros((time_dim, freq_dim))
                 frame_spliced[left_context - min(i, left_context):left_context, :] = feats_numpy[i - min(i, left_context):i, :]
                 frame_spliced[left_context, :] = feats_numpy[i, :]
                 frame_spliced[left_context + 1:left_context + 1 + min(num_frames - i - 1, right_context), :] = feats_numpy[i + 1:i + 1 + min(num_frames - i - 1, right_context), :]
                 
-                frame_tensor = torch.FloatTensor(frame_spliced)
-                if on_gpu:
-                    frame_tensor = frame_tensor.cuda()
-                frame_tensor = Variable(frame_tensor)
+                frame_spliced_all[i, :, :] = frame_spliced
+                
+            # Pass full utterance through decoder
+            frame_tensor = torch.FloatTensor(frame_spliced_all)
+            if on_gpu:
+                frame_tensor = frame_tensor.cuda()
+            frame_tensor = Variable(frame_tensor)
 
-                recon_frames = model.forward_decoder(frame_tensor, target_class)
-
-                recon_frames_numpy = recon_frames.cpu().data.numpy().reshape((-1, freq_dim))
-                decoded_feats[i, :] = recon_frames_numpy[left_context:left_context + 1, :]
+            recon_frames = model.forward_decoder(frame_tensor, target_class)
 
             # Write to output file
+            decoded_feats = recon_frames.cpu().data.numpy().reshape((-1, time_dim, freq_dim))[:, left_context:left_context + 1, :].reshape((-1, freq_dim))
             write_kaldi_ark(ark_fd, utt_id, decoded_feats)
-
+            
             # Print updates, if any
             batches_processed += 1
             if batches_processed % log_interval == 0:
