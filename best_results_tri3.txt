@@ -1,9 +1,7 @@
 Original MFCC:
 ===============================================================================
 
-Clean:
-%WER 20.8 | 400 15057 | 82.4 12.8 4.9 3.2 20.8 99.8 | -0.644 | exp/tri3/decode_dev/score_10/ctm_39phn.filt.sys
-%WER 21.7 | 192 7215 | 81.8 13.8 4.3 3.5 21.7 99.5 | -1.180 | exp/tri3/decode_test/score_7/ctm_39phn.filt.sys
+Clean:          Dev 20.8%, Test 21.7%
 
 
 
@@ -15,86 +13,44 @@ Single RIR models
 Clean baseline:
 ===============================================================================
 
-Clean:
-%WER 20.7 | 400 15057 | 82.5 12.8 4.7 3.2 20.7 99.8 | -0.652 | exp/tri3/decode_clean_dev/score_10/ctm_39phn.filt.sys
-%WER 22.3 | 192 7215 | 80.9 14.0 5.1 3.2 22.3 99.5 | -0.672 | exp/tri3/decode_clean_test/score_10/ctm_39phn.filt.sys
-
-Single RIR dirty
-%WER 49.4 | 400 15057 | 53.7 26.4 19.9 3.2 49.4 100.0 | -3.039 | exp/tri3/decode_dirty_dev/score_5/ctm_39phn.filt.sys
-%WER 51.6 | 192 7215 | 50.5 26.2 23.4 2.1 51.6 100.0 | -1.965 | exp/tri3/decode_dirty_test/score_8/ctm_39phn.filt.sys
+Clean:          Dev 20.7%, Test 22.3%
+Dirty:          Dev 49.4%, Test 51.6%
 
 
 Dirty baseline:
 ===============================================================================
 
-Clean:
-%WER 39.5 | 400 15057 | 68.2 22.5 9.3 7.7 39.5 100.0 | -0.952 | exp/tri3/decode_clean_dev/score_8/ctm_39phn.filt.sys
-%WER 40.6 | 192 7215 | 66.2 22.7 11.2 6.7 40.6 100.0 | -0.901 | exp/tri3/decode_clean_test/score_9/ctm_39phn.filt.sys
-
-Single RIR dirty
-%WER 30.4 | 400 15057 | 73.9 17.7 8.4 4.4 30.4 100.0 | -1.217 | exp/tri3/decode_dirty_dev/score_6/ctm_39phn.filt.sys
-%WER 31.6 | 192 7215 | 72.6 18.7 8.8 4.2 31.6 99.5 | -1.303 | exp/tri3/decode_dirty_test/score_6/ctm_39phn.filt.sys
+Clean:          Dev 39.5%, Test 40.6%
+Dirty:          Dev 30.4%, Test 31.6%
 
 
 3/14 augmented
 /data/sls/scratch/atitus5/meng//augmented_data/cnn/timit_dirty_single_rir/LOSS_L1Loss/RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/vanilla
 ===============================================================================
 
-Clean:
-%WER 45.5 | 400 15057 | 59.6 25.0 15.5 5.0 45.5 100.0 | -0.971 | exp/tri3/decode_clean_dev/score_9/ctm_39phn.filt.sys
-%WER 47.6 | 192 7215 | 58.1 26.3 15.7 5.7 47.6 100.0 | -1.570 | exp/tri3/decode_clean_test/score_7/ctm_39phn.filt.sys
-
-Dirty:
-%WER 65.3 | 400 15057 | 37.5 32.1 30.4 2.8 65.3 100.0 | -3.857 | exp/tri3/decode_dirty_dev/score_6/ctm_39phn.filt.sys
-%WER 68.3 | 192 7215 | 34.8 34.4 30.8 3.1 68.3 100.0 | -5.694 | exp/tri3/decode_dirty_test/score_4/ctm_39phn.filt.sys
-
-Augmented:
-%WER 28.8 | 400 15057 | 75.9 17.7 6.5 4.7 28.8 100.0 | -0.901 | exp/tri3/decode_augmented_dev/score_8/ctm_39phn.filt.sys
-%WER 30.9 | 192 7215 | 73.1 19.4 7.5 4.0 30.9 100.0 | -0.643 | exp/tri3/decode_augmented_test/score_10/ctm_39phn.filt.sys
+Clean:          Dev 45.5%, Test 47.6%
+Dirty:          Dev 65.3%, Test 68.3%
+Augmented:      Dev 28.8%, Test 30.9%
 
 
 3/14 enhancement
 /data/sls/scratch/atitus5/meng//augmented_data/cnn/timit_dirty_single_rir/LOSS_L1Loss/RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/vanilla
 ===============================================================================
 
-Clean:
-%WER 20.7 | 400 15057 | 82.5 12.8 4.7 3.2 20.7 99.8 | -0.654 | exp/tri3/decode_clean_dev/score_10/ctm_39phn.filt.sys
-%WER 22.3 | 192 7215 | 80.9 14.0 5.1 3.2 22.3 99.5 | -0.671 | exp/tri3/decode_clean_test/score_10/ctm_39phn.filt.sys
-
-Reconstructed clean:
-%WER 26.1 | 400 15057 | 78.2 16.3 5.5 4.3 26.1 100.0 | -0.553 | exp/tri3/decode_reconstructed_dev/score_10/ctm_39phn.filt.sys
-%WER 27.6 | 192 7215 | 76.6 17.4 5.9 4.3 27.6 99.5 | -0.805 | exp/tri3/decode_reconstructed_test/score_9/ctm_39phn.filt.sys
-
-Dirty:
-%WER 49.4 | 400 15057 | 53.7 26.4 19.9 3.2 49.4 100.0 | -3.048 | exp/tri3/decode_dirty_dev/score_5/ctm_39phn.filt.sys
-%WER 51.6 | 192 7215 | 50.3 25.5 24.2 1.9 51.6 100.0 | -1.735 | exp/tri3/decode_dirty_test/score_9/ctm_39phn.filt.sys
-
-Enhanced dirty:
-%WER 38.3 | 400 15057 | 67.9 23.7 8.4 6.1 38.3 100.0 | -0.865 | exp/tri3/decode_enhanced_dev/score_10/ctm_39phn.filt.sys
-%WER 39.3 | 192 7215 | 66.7 24.8 8.5 6.0 39.3 100.0 | -1.091 | exp/tri3/decode_enhanced_test/score_9/ctm_39phn.filt.sys
+Clean:          Dev 20.7%, Test 22.3%
+Reconstructed:  Dev 26.1%, Test 27.6%
+Dirty:          Dev 49.4%, Test 51.6%
+Enhanced:       Dev 38.3%, Test 39.3%
 
 
 3/16 denoising enhancement
 Using data from /data/sls/scratch/atitus5/meng//augmented_data/cnn/timit_dirty_single_rir/LOSS_L1Loss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/vanilla_denoiser
 ===============================================================================
 
-Clean:
-%WER 20.7 | 400 15057 | 82.5 12.8 4.7 3.2 20.7 99.8 | -0.654 | exp/tri3/decode_clean_dev/score_10/ctm_39phn.filt.sys
-%WER 22.3 | 192 7215 | 80.9 14.0 5.1 3.2 22.3 99.5 | -0.671 | exp/tri3/decode_clean_test/score_10/ctm_39phn.filt.sys
-
-Reconstructed clean:
-%WER 23.1 | 400 15057 | 80.5 14.4 5.0 3.7 23.1 99.8 | -0.808 | exp/tri3/decode_reconstructed_dev/score_9/ctm_39phn.filt.sys
-%WER 24.8 | 192 7215 | 78.6 15.7 5.7 3.4 24.8 99.5 | -0.663 | exp/tri3/decode_reconstructed_test/score_10/ctm_39phn.filt.sys
-
-Dirty:
-%WER 49.4 | 400 15057 | 53.7 26.4 19.9 3.2 49.4 100.0 | -3.048 | exp/tri3/decode_dirty_dev/score_5/ctm_39phn.filt.sys
-%WER 51.6 | 192 7215 | 50.3 25.5 24.2 1.9 51.6 100.0 | -1.735 | exp/tri3/decode_dirty_test/score_9/ctm_39phn.filt.sys
-
-Enhanced dirty:
-%WER 32.2 | 400 15057 | 73.0 19.7 7.3 5.1 32.2 100.0 | -0.917 | exp/tri3/decode_enhanced_dev/score_10/ctm_39phn.filt.sys
-%WER 34.1 | 192 7215 | 70.5 21.3 8.1 4.7 34.1 100.0 | -0.990 | exp/tri3/decode_enhanced_test/score_10/ctm_39phn.filt.sys
-
-
+Clean:          Dev 20.7%, Test 22.3%
+Reconstructed:  Dev 23.1%, Test 24.8%
+Dirty:          Dev 49.4%, Test 51.6%
+Enhanced:       Dev 32.2%, Test 34.1%
 
 
 
@@ -106,63 +62,42 @@ Enhanced dirty:
 Clean baseline:
 ===============================================================================
 
-Clean:
-%WER 20.7 | 400 15057 | 82.5 12.8 4.7 3.2 20.7 99.8 | -0.652 | exp/tri3/decode_clean_dev/score_10/ctm_39phn.filt.sys
-%WER 22.3 | 192 7215 | 80.9 14.0 5.1 3.2 22.3 99.5 | -0.670 | exp/tri3/decode_clean_test/score_10/ctm_39phn.filt.sys
-
-Dirty:
-%WER 31.3 | 400 15057 | 72.0 18.1 10.0 3.3 31.3 99.8 | -0.894 | exp/tri3/decode_dirty_dev/score_9/ctm_39phn.filt.sys
-%WER 32.7 | 192 7215 | 70.7 19.3 10.0 3.4 32.7 100.0 | -1.190 | exp/tri3/decode_dirty_test/score_8/ctm_39phn.filt.sys
+Clean:          Dev 20.7%, Test 22.3%
+Dirty:          Dev 31.3%, Test 32.7%
 
 
 Dirty baseline:
 ===============================================================================
 
-Clean:
-%WER 23.0 | 400 15057 | 81.0 14.3 4.7 4.0 23.0 100.0 | -0.690 | exp/tri3/decode_clean_dev/score_8/ctm_39phn.filt.sys
-%WER 24.3 | 192 7215 | 79.5 15.3 5.2 3.8 24.3 100.0 | -0.752 | exp/tri3/decode_clean_test/score_8/ctm_39phn.filt.sys
-
-Dirty:
-%WER 27.5 | 400 15057 | 77.0 16.7 6.3 4.5 27.5 100.0 | -1.117 | exp/tri3/decode_dirty_dev/score_6/ctm_39phn.filt.sys
-%WER 28.3 | 192 7215 | 75.0 17.1 7.9 3.3 28.3 100.0 | -0.519 | exp/tri3/decode_dirty_test/score_9/ctm_39phn.filt.sys
+Clean:          Dev 23.0%, Test 24.3%
+Dirty:          Dev 27.5%, Test 28.3%
 
 
 3/17 denoising enhancement
 /data/sls/scratch/atitus5/meng/augmented_data/cnn/timit_dirty_100_rir/LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/vanilla_denoiser
 ===============================================================================
 
-Clean:
-%WER 20.7 | 400 15057 | 82.5 12.8 4.7 3.2 20.7 99.8 | -0.654 | exp/tri3/decode_clean_dev/score_10/ctm_39phn.filt.sys
-%WER 22.3 | 192 7215 | 80.9 14.0 5.1 3.2 22.3 99.5 | -0.671 | exp/tri3/decode_clean_test/score_10/ctm_39phn.filt.sys
-
-Reconstructed clean:
-%WER 25.2 | 400 15057 | 78.5 15.6 5.9 3.7 25.2 99.8 | -0.683 | exp/tri3/decode_reconstructed_dev/score_10/ctm_39phn.filt.sys
-%WER 26.6 | 192 7215 | 77.6 16.7 5.7 4.2 26.6 100.0 | -1.054 | exp/tri3/decode_reconstructed_test/score_8/ctm_39phn.filt.sys
-
-Dirty:
-%WER 31.3 | 400 15057 | 72.2 18.1 9.7 3.6 31.3 99.8 | -1.111 | exp/tri3/decode_dirty_dev/score_8/ctm_39phn.filt.sys
-%WER 32.7 | 192 7215 | 70.7 19.4 9.9 3.4 32.7 100.0 | -1.186 | exp/tri3/decode_dirty_test/score_8/ctm_39phn.filt.sys
-
-Enhanced dirty
-%WER 32.2 | 400 15057 | 72.0 20.0 8.1 4.2 32.2 100.0 | -0.784 | exp/tri3/decode_enhanced_dev/score_10/ctm_39phn.filt.sys
-%WER 33.7 | 192 7215 | 70.6 21.1 8.3 4.3 33.7 100.0 | -0.771 | exp/tri3/decode_enhanced_test/score_10/ctm_39phn.filt.sys
+Clean:          Dev 20.7%, Test 22.3%
+Reconstructed:  Dev 25.2%, Test 26.6%
+Dirty:          Dev 31.3%, Test 32.7%
+Enhanced:       Dev 32.2%, Test 33.7%
 
 
 3/19 multitask (no phone FC)
 /data/sls/scratch/atitus5/meng/augmented_data/cnn/timit_dirty_100_rir/LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC___ACT_ReLU/vanilla_phone
 ===============================================================================
 
-Clean:
-Reconstructed:
-Dirty:
-Enhanced dirty:
+Clean:          Dev 20.7%, Test 22.3%
+Reconstructed:  Dev 27.7%, Test 28.2%
+Dirty:          Dev 31.3%, Test 32.7%
+Enhanced:       Dev 34.9%, Test 35.4%
 
 
 3/19 multitask (FC 256)
 /data/sls/scratch/atitus5/meng/augmented_data/cnn/timit_dirty_100_rir/LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC__256_ACT_ReLU/vanilla_phone
 ===============================================================================
 
-Clean:
-Reconstructed:
-Dirty:
-Enhanced dirty:
+Clean:          Dev 20.7%, Test 22.3%
+Reconstructed:  Dev 27.9%, Test 29.3%
+Dirty:          Dev 31.3%, Test 32.7%
+Enhanced dirty: Dev 35.2%, Test 36.8%
