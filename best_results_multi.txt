@@ -31,3 +31,15 @@ LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F
 ===============================================================================
 Clean: Dev 33.6%, Test 33.9%
 Dirty: Dev 38.9%, Test 38.4%
+
+
+LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC__256_ACT_ReLU
+===============================================================================
+Clean: Dev 31.8%, Test 32.3%
+Dirty: Dev %, Test %
+
+
+LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC___ACT_ReLU
+===============================================================================
+Clean: Dev %, Test %
+Dirty: Dev %, Test %
