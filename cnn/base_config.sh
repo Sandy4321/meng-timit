@@ -45,8 +45,10 @@ export DIRTY_DATASET=timit_dirty_100_rir
 export DIRTY_FEATS=$FEATS/$DIRTY_DATASET
 
 
-export USE_RECONSTRUCTION=true
-export USE_TRANSFORMATION=true
+# export USE_RECONSTRUCTION=true
+export USE_RECONSTRUCTION=false
+# export USE_TRANSFORMATION=true
+export USE_TRANSFORMATION=false
 
 export LOSS_FUNC=MSELoss
 # export LOSS_FUNC=L1Loss

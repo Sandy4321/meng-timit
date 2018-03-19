@@ -146,3 +146,23 @@ Dirty:
 Enhanced dirty:
 %WER 28.7 | 400 15057 | 75.5 18.0 6.5 4.1 28.7 100.0 | -0.723 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_enhanced_dev_it6/score_7/ctm_39phn.filt.sys
 %WER 31.2 | 192 7215 | 72.3 19.0 8.6 3.6 31.2 100.0 | -0.576 | exp/dnn4_pretrain-dbn_dnn_smbr/decode_enhanced_test_it6/score_10/ctm_39phn.filt.sys
+
+
+3/19 multitask (no phone FC)
+/data/sls/scratch/atitus5/meng/augmented_data/cnn/timit_dirty_100_rir/LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC___ACT_ReLU/vanilla_phone
+===============================================================================
+
+Clean:
+Reconstructed:
+Dirty:
+Enhanced dirty:
+
+
+3/19 multitask (FC 256)
+/data/sls/scratch/atitus5/meng/augmented_data/cnn/timit_dirty_100_rir/LOSS_MSELoss/RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC__256_ACT_ReLU/vanilla_phone
+===============================================================================
+
+Clean:
+Reconstructed:
+Dirty:
+Enhanced dirty:
