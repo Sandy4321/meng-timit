@@ -82,11 +82,11 @@ if [ $stage -lt 1 ]; then
 fi
 
 if [ $stage -lt 2 ]; then
-    for subdir in dev test; do
-        echo "Scoring data in $subdir"
+    for source_class in "${DECODER_CLASSES[@]}"; do
+        echo "Processing source class $source_class"
 
-        for source_class in "${DECODER_CLASSES[@]}"; do
-            echo "Processing source class $source_class"
+        for subdir in dev test; do
+            echo "Scoring data in $subdir"
             
             dir=$MULTITASK_DIR/$subdir/$source_class
             mkdir -p $dir

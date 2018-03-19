@@ -1,0 +1,89 @@
+================================================================================
+timit_dirty_single_rir
+================================================================================
+
+
+==> L1Loss:
+
+
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC__1024_1024_ACT_ReLU
+================================================================================
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.242466
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.339211
+===> Total for class clean: 3.581677
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.327473
+===> phone_loss: 3.853713
+===> Total for class dirty: 4.181186
+TOTAL: 7.762863
+
+
+
+================================================================================
+timit_dirty_100_rir
+================================================================================
+
+
+==> MSELoss:
+
+
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC__1024_1024_ACT_ReLU
+================================================================================
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.116012
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.271255
+===> Total for class clean: 3.387267
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.213276
+===> phone_loss: 3.755303
+===> Total for class dirty: 3.968578
+TOTAL: 7.355845
+
+
+
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC__1024_1024_1024_1024_ACT_ReLU
+================================================================================
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.110755
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.417037
+===> Total for class clean: 3.527792
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.202092
+===> phone_loss: 3.879879
+===> Total for class dirty: 4.081971
+TOTAL: 7.609763
+
+
+
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_64/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/PHONE_FC__1024_ACT_ReLU
+================================================================================
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.113744
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.291688
+===> Total for class clean: 3.405432
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.217418
+===> phone_loss: 3.890108
+===> Total for class dirty: 4.107526
+TOTAL: 7.512958

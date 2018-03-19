@@ -63,12 +63,12 @@ if [ $stage -le 0 ]; then
   # done
 
   # MODIFIED TO RUN LMWTs IN PARALLEL, ASSUMING ONE LATTICE
-  if [ ! -f $dir/aligned_phones.ark ]; then
-      lattice-align-phones $model "ark:gunzip -c $dir/lat.1.gz|" ark:$dir/aligned_phones.ark
+  if [ ! -f $dir/aligned_phones.lats ]; then
+      lattice-align-phones $model "ark:gunzip -c $dir/lat.1.gz|" ark:$dir/aligned_phones.lats
   fi
-  $cmd LMWT=${min_lmwt}:${max_lmwt} $dir/scoring/log/best_path.LMWT.log \
-      local/lattice-to-ctm-conf-parallel.sh LMWT $mbr_scale $dir/aligned_phones.ark \
-      | sort > $dir/scoring/LMWT.ctm || exit 1;
+  $cmd LMWT=$min_lmwt:$max_lmwt $dir/scoring/log/best_path.LMWT.log \
+      local/lattice-to-ctm-conf-parallel.sh LMWT $mbr_scale $dir/aligned_phones.lats \
+      \| sort '>' $dir/scoring/LMWT.ctm || exit 1;
 fi
 
 if [ $stage -le 1 ]; then
