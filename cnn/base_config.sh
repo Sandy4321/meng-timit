@@ -10,11 +10,11 @@ export BATCH_SIZE=64
 export ENC_CHANNELS=( 32 32 )
 export ENC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
 export ENC_DOWNSAMPLES=( 2 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
-export ENC_FC=( 256 )     # Fully-connected layers following conv layers
+export ENC_FC=( 1024 )     # Fully-connected layers following conv layers
 
 export LATENT_DIM=256
 
-export DEC_FC=( 256 )     # Fully-connected layers before conv layers
+export DEC_FC=( 1024 )     # Fully-connected layers before conv layers
 export DEC_CHANNELS=( 32 32 )
 export DEC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
 export DEC_UPSAMPLES=( 2 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling

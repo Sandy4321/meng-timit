@@ -1,0 +1,26 @@
+================================================================================
+timit_dirty_100_rir
+================================================================================
+
+
+==> MSELoss:
+
+RECON_false_TRANS_false_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_256/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+================================================================================
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.029237
+===> Total for class clean: 3.029237
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.498004
+===> Total for class dirty: 3.498004
+TOTAL: 6.527241
+
+
+

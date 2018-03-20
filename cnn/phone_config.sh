@@ -1,4 +1,4 @@
-export PHONE_FC=( 256 )
+export PHONE_FC=( 1024 1024 )
 export PHONE_FC_DELIM=$(printf "_%s" "${PHONE_FC[@]}")
 export PHONE_ACTIVATION=ReLU
 
