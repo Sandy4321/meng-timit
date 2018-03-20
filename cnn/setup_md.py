@@ -5,10 +5,10 @@ import numpy as np
 
 sys.path.append("./")
 sys.path.append("./cnn")
-from cnn_md import CNNMultidecoder, CNNDomainAdversarialMultidecoder, CNNGANMultidecoder, CNNPhoneMultidecoder
+from cnn_md import CNNMultidecoder, CNNDomainAdversarialMultidecoder, CNNGANMultidecoder, CNNPhoneMultidecoder, CNNEnd2EndMultidecoder
 
 # Returns the instantiated model based on the current environment variables
-def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False):
+def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False, e2e=False):
     # Set up features
     feat_dim = int(os.environ["FEAT_DIM"])
     left_context = int(os.environ["LEFT_CONTEXT"])
@@ -57,7 +57,7 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
     activation = os.environ["ACTIVATION_FUNC"]
 
     # If we're running as a denoiser or phone, only keep the clean class
-    if denoiser or phone:
+    if denoiser or phone or e2e:
         decoder_classes = ["clean"]
     else:
         decoder_classes = []
@@ -88,6 +88,14 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
             if len(res_str) > 0:
                 phone_fc_sizes.append(int(res_str))
         phone_activation = os.environ["PHONE_ACTIVATION"]
+        num_phones = int(os.environ["NUM_PHONES"])
+    
+    if e2e:
+        e2e_fc_sizes = []
+        for res_str in os.environ["END2END_FC_DELIM"].split("_"):
+            if len(res_str) > 0:
+                e2e_fc_sizes.append(int(res_str))
+        e2e_activation = os.environ["END2END_ACTIVATION"]
         num_phones = int(os.environ["NUM_PHONES"])
 
     # Construct autoencoder with our parameters
@@ -146,6 +154,25 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
                                   phone_fc_sizes=phone_fc_sizes,
                                   phone_activation=phone_activation,
                                   num_phones=num_phones)
+    elif e2e:
+        model = CNNEnd2EndMultidecoder(freq_dim=freq_dim,
+                                  splicing=[left_context, right_context], 
+                                  enc_channel_sizes=enc_channel_sizes,
+                                  enc_kernel_sizes=enc_kernel_sizes,
+                                  enc_downsample_sizes=enc_downsample_sizes,
+                                  enc_fc_sizes=enc_fc_sizes,
+                                  latent_dim=latent_dim,
+                                  dec_fc_sizes=dec_fc_sizes,
+                                  dec_channel_sizes=dec_channel_sizes,
+                                  dec_kernel_sizes=dec_kernel_sizes,
+                                  dec_upsample_sizes=dec_upsample_sizes,
+                                  activation=activation,
+                                  use_batch_norm=use_batch_norm,
+                                  decoder_classes=decoder_classes,
+                                  weight_init=weight_init,
+                                  e2e_fc_sizes=e2e_fc_sizes,
+                                  e2e_activation=e2e_activation,
+                                  num_phones=num_phones)
     else:
         model = CNNMultidecoder(freq_dim=freq_dim,
                                 splicing=[left_context, right_context], 
@@ -167,7 +194,7 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
 
 
 
-def best_ckpt_path(domain_adversarial=False, gan=False, denoiser=False, phone=False):
+def best_ckpt_path(domain_adversarial=False, gan=False, denoiser=False, phone=False, e2e=False):
     model_dir = os.environ["MODEL_DIR"]
 
     if domain_adversarial:
@@ -176,6 +203,8 @@ def best_ckpt_path(domain_adversarial=False, gan=False, denoiser=False, phone=Fa
         model_name = "best_md_gan"
     elif phone:
         model_name = "best_md_phone"
+    elif e2e:
+        model_name = "best_md_e2e"
     else:
         model_name = "best_md_vanilla"
 

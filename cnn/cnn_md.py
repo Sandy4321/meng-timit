@@ -409,7 +409,7 @@ class CNNGANMultidecoder(CNNMultidecoder):
         return self.gans[decoder_class](feats.view((-1, self.time_dim * self.freq_dim)))
 
 
-# Includes a phone classifier
+# Includes a phone classifier at the latent space
 class CNNPhoneMultidecoder(CNNMultidecoder):
     def __init__(self, freq_dim=40,
                        splicing=[5,5],
@@ -478,3 +478,72 @@ class CNNPhoneMultidecoder(CNNMultidecoder):
                                                                            self.freq_dim))
 
         return self.phone_classifier(latent)
+
+
+# Includes a phone classifier at the output features -- trained end-to-end
+class CNNEnd2EndMultidecoder(CNNMultidecoder):
+    def __init__(self, freq_dim=40,
+                       splicing=[5,5],
+                       enc_channel_sizes=[],
+                       enc_kernel_sizes=[],
+                       enc_downsample_sizes=[],
+                       enc_fc_sizes=[],
+                       latent_dim=512,
+                       dec_fc_sizes=[],
+                       dec_channel_sizes=[],
+                       dec_kernel_sizes=[],
+                       dec_upsample_sizes=[],
+                       activation="ReLU",
+                       decoder_classes=[""],
+                       use_batch_norm=False,
+                       weight_init="xavier_uniform",
+                       e2e_fc_sizes=[],
+                       e2e_activation="Sigmoid",
+                       num_phones=1):
+        if len(decoder_classes) > 1 or decoder_classes[0] != "clean":
+            raise RuntimeError("CNNEnd2EndMultidecoder only uses one decoder class (clean)")
+
+        super(CNNEnd2EndMultidecoder, self).__init__(freq_dim=freq_dim,
+                                                splicing=splicing,
+                                                enc_channel_sizes=enc_channel_sizes,
+                                                enc_kernel_sizes=enc_kernel_sizes,
+                                                enc_downsample_sizes=enc_downsample_sizes,
+                                                enc_fc_sizes=enc_fc_sizes,
+                                                latent_dim=latent_dim,
+                                                dec_fc_sizes=dec_fc_sizes,
+                                                dec_channel_sizes=dec_channel_sizes,
+                                                dec_kernel_sizes=dec_kernel_sizes,
+                                                dec_upsample_sizes=dec_upsample_sizes,
+                                                activation=activation,
+                                                decoder_classes=decoder_classes,
+                                                use_batch_norm=use_batch_norm,
+                                                weight_init=weight_init)
+        
+        self.e2e_fc_sizes = e2e_fc_sizes
+        self.e2e_activation = e2e_activation
+        self.num_phones = num_phones
+
+        # Construct simple linear phone classifier on top of reconstruction layer
+        self.phone_layers = OrderedDict()
+        current_dim = self.time_dim * self.freq_dim
+        for i in range(len(self.e2e_fc_sizes)):
+            next_dim = self.e2e_fc_sizes[i]
+            self.phone_layers["lin_%d" % i] = nn.Linear(current_dim, next_dim)
+            self.phone_layers["%s_%d" % (self.e2e_activation, i)] = getattr(nn, self.e2e_activation)()
+            current_dim = next_dim
+        self.phone_layers["lin_final"] = nn.Linear(current_dim, self.num_phones)
+        self.phone_layers["LogSoftmax_final"] = nn.LogSoftmax(dim=1)
+        self.phone_classifier = nn.Sequential(self.phone_layers)
+
+    def generator_parameters(self):
+        # Get parameters for generator and phone classifier
+        for param in self.phone_classifier.parameters():
+            yield param
+        for param in self.decoder_parameters("clean"):
+            yield param
+        for param in self.encoder_parameters():
+            yield param
+
+    def forward_phones(self, feats):
+        enhanced_feats = self.forward_decoder(feats, "clean")
+        return self.phone_classifier(enhanced_feats.view((-1, self.time_dim * self.freq_dim)))

@@ -7,17 +7,17 @@ export L2_REG=0.0
 export EPOCHS=100
 export BATCH_SIZE=64
 
-export ENC_CHANNELS=( )
-export ENC_KERNELS=( )        # Assume square kernels (AxA)
-export ENC_DOWNSAMPLES=( )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
-export ENC_FC=( )     # Fully-connected layers following conv layers
+export ENC_CHANNELS=( 32 32 )
+export ENC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
+export ENC_DOWNSAMPLES=( 2 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
+export ENC_FC=( 256 )     # Fully-connected layers following conv layers
 
 export LATENT_DIM=256
 
-export DEC_FC=( )     # Fully-connected layers before conv layers
-export DEC_CHANNELS=( )
-export DEC_KERNELS=( )        # Assume square kernels (AxA)
-export DEC_UPSAMPLES=( )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
+export DEC_FC=( 256 )     # Fully-connected layers before conv layers
+export DEC_CHANNELS=( 32 32 )
+export DEC_KERNELS=( 3 3 )        # Assume square kernels (AxA)
+export DEC_UPSAMPLES=( 2 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
 
 export USE_BATCH_NORM=false
 export ACTIVATION_FUNC=ReLU
@@ -45,10 +45,8 @@ export DIRTY_DATASET=timit_dirty_100_rir
 export DIRTY_FEATS=$FEATS/$DIRTY_DATASET
 
 
-# export USE_RECONSTRUCTION=true
-export USE_RECONSTRUCTION=false
-# export USE_TRANSFORMATION=true
-export USE_TRANSFORMATION=false
+export USE_RECONSTRUCTION=true
+export USE_TRANSFORMATION=true
 
 export LOSS_FUNC=MSELoss
 # export LOSS_FUNC=L1Loss
