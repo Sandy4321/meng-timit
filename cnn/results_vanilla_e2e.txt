@@ -23,4 +23,55 @@ Losses:
 TOTAL: 6.527241
 
 
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_1024/LATENT_256/DEC_F_1024_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+================================================================================
 
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.222829
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.169399
+===> Total for class clean: 3.392228
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.290697
+===> phone_loss: 3.634806
+===> Total for class dirty: 3.925502
+TOTAL: 7.317730
+
+
+RECON_false_TRANS_false_ENC_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_2_2_0_0_0_0_F_1024/LATENT_256/DEC_F_1024_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_0_0_0_0_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+================================================================================
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.000308
+===> Total for class clean: 3.000308
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.496117
+===> Total for class dirty: 3.496117
+TOTAL: 6.496425
+
+
+RECON_true_TRANS_true_ENC_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_2_2_0_0_0_0_F_1024/LATENT_256/DEC_F_1024_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_0_0_0_0_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+================================================================================
+
+DEV SET
+Losses:
+=> Class clean
+===> autoencoding_recon_loss: 0.361822
+===> transformation_recon_loss: 0.000000
+===> phone_loss: 3.231983
+===> Total for class clean: 3.593805
+=> Class dirty
+===> autoencoding_recon_loss: 0.000000
+===> transformation_recon_loss: 0.424042
+===> phone_loss: 3.657231
+===> Total for class dirty: 4.081273
+TOTAL: 7.675078

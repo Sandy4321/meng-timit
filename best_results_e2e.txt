@@ -1,0 +1,24 @@
+===============================================================================
+100 RIR dirty data
+===============================================================================
+
+
+RECON_false_TRANS_false_ENC_C_32_32_K_3_3_P_2_2_F_256/LATENT_256/DEC_F_256_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+===============================================================================
+Clean: Dev 29.7%, Test 30.6%
+Dirty: Dev 35.0%, Test 35.2%
+
+RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_1024/LATENT_256/DEC_F_1024_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+===============================================================================
+Clean: Dev 30.9%, Test 32.1%
+Dirty: Dev 36.3%, Test 36.6%
+
+RECON_false_TRANS_false_ENC_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_2_2_0_0_0_0_F_1024/LATENT_256/DEC_F_1024_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_0_0_0_0_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+================================================================================
+Clean: Dev 30.0%, Test 30.2%
+Dirty: Dev 35.0%, Test 35.6%
+
+RECON_true_TRANS_true_ENC_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_2_2_0_0_0_0_F_1024/LATENT_256/DEC_F_1024_C_8_8_8_8_8_8_K_3_3_3_3_3_3_P_0_0_0_0_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__256_256_ACT_ReLU
+================================================================================
+Clean: Dev 32.0%, Test 32.2%
+Dirty: Dev 36.5%, Test 37.6%
