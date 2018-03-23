@@ -1,4 +1,4 @@
-export END2END_FC=( 256 256 )
+export END2END_FC=( 1024 1024 )
 export END2END_FC_DELIM=$(printf "_%s" "${END2END_FC[@]}")
 export END2END_ACTIVATION=ReLU
 
