@@ -30,7 +30,7 @@ Dirty: Dev 35.3%, Test 35.8%
 
 RECON_false_TRANS_false_ENC_C_32_32_K_3_3_P_2_2_F_1024/LATENT_256/DEC_F_1024_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.001_EPOCHS_100_BATCH_64/END2END_FC__1024_1024_ACT_ReLU
 ================================================================================
-Clean: Dev %, Test %
+Clean: Dev 37.1%, Test 38.0%
 Dirty: Dev %, Test %
 
 RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_1024/LATENT_256/DEC_F_1024_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/END2END_FC__1024_1024_ACT_ReLU
@@ -40,5 +40,5 @@ Dirty: Dev 35.3%, Test 36.3%
 
 RECON_true_TRANS_true_ENC_C_32_32_K_3_3_P_2_2_F_1024/LATENT_256/DEC_F_1024_C_32_32_K_3_3_P_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.001_EPOCHS_100_BATCH_64/END2END_FC__1024_1024_ACT_ReLU
 ================================================================================
-Clean: Dev %, Test %
+Clean: Dev 37.5%, Test 38.2%
 Dirty: Dev %, Test %
