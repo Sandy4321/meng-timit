@@ -16,7 +16,7 @@ import random
 import numpy as np
 
 sys.path.append("./")
-from utils.kaldi_data import read_next_utt, write_kaldi_ark, write_kaldi_scp
+from py_utils.kaldi_data import read_next_utt, write_kaldi_ark, write_kaldi_scp
 
 print("Reading features and writing ark file...", flush=True)
 noised_filename_base = "feats-norm"

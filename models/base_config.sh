@@ -15,15 +15,11 @@ export LATENT_DIM=1024
 
 export USE_BATCH_NORM=false
 export ACTIVATION_FUNC=ReLU
-export WEIGHT_INIT=xavier_uniform
 
 export CHANNELS_DELIM=$(printf "_%s" "${CHANNELS[@]}")
 export KERNELS_DELIM=$(printf "_%s" "${KERNELS[@]}")
 export DOWNSAMPLES_DELIM=$(printf "_%s" "${DOWNSAMPLES[@]}")
 export FC_DELIM=$(printf "_%s" "${FC[@]}")
-
-export DECODER_CLASSES=( clean dirty )
-export DECODER_CLASSES_DELIM=$(printf "_%s" "${DECODER_CLASSES[@]}")
 
 export CLEAN_DATASET=timit_clean
 export CLEAN_FEATS=$FEATS/$CLEAN_DATASET

@@ -4,11 +4,12 @@ import sys
 import numpy as np
 
 sys.path.append("./")
-sys.path.append("./cnn")
-from cnn_md import CNNMultidecoder, CNNDomainAdversarialMultidecoder, CNNGANMultidecoder, CNNPhoneMultidecoder, CNNEnd2EndMultidecoder
+sys.path.append("./models")
+# from pytorch_models import CNNMultidecoder, CNNDomainAdversarialMultidecoder, CNNGANMultidecoder, CNNPhoneMultidecoder, CNNEnd2EndMultidecoder
+from pytorch_models import EnhancementNetwork
 
 # Returns the instantiated model based on the current environment variables
-def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False, e2e=False):
+def setup_model():
     # Set up features
     feat_dim = int(os.environ["FEAT_DIM"])
     left_context = int(os.environ["LEFT_CONTEXT"])
@@ -18,94 +19,34 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
     time_dim = (left_context + right_context + 1)
 
     # Read in parameters to use for our network
-    enc_channel_sizes = []
-    for res_str in os.environ["ENC_CHANNELS_DELIM"].split("_"):
+    channel_sizes = []
+    for res_str in os.environ["CHANNELS_DELIM"].split("_"):
         if len(res_str) > 0:
-            enc_channel_sizes.append(int(res_str))
-    enc_kernel_sizes = []
-    for res_str in os.environ["ENC_KERNELS_DELIM"].split("_"):
+            channel_sizes.append(int(res_str))
+    kernel_sizes = []
+    for res_str in os.environ["KERNELS_DELIM"].split("_"):
         if len(res_str) > 0:
-            enc_kernel_sizes.append(int(res_str))
-    enc_downsample_sizes = []
-    for res_str in os.environ["ENC_DOWNSAMPLES_DELIM"].split("_"):
+            kernel_sizes.append(int(res_str))
+    downsample_sizes = []
+    for res_str in os.environ["DOWNSAMPLES_DELIM"].split("_"):
         if len(res_str) > 0:
-            enc_downsample_sizes.append(int(res_str))
-    enc_fc_sizes = []
-    for res_str in os.environ["ENC_FC_DELIM"].split("_"):
+            downsample_sizes.append(int(res_str))
+    fc_sizes = []
+    for res_str in os.environ["FC_DELIM"].split("_"):
         if len(res_str) > 0:
-            enc_fc_sizes.append(int(res_str))
-
+            fc_sizes.append(int(res_str))
     latent_dim = int(os.environ["LATENT_DIM"])
-
-    dec_fc_sizes = []
-    for res_str in os.environ["DEC_FC_DELIM"].split("_"):
-        if len(res_str) > 0:
-            dec_fc_sizes.append(int(res_str))
-    dec_channel_sizes = []
-    for res_str in os.environ["DEC_CHANNELS_DELIM"].split("_"):
-        if len(res_str) > 0:
-            dec_channel_sizes.append(int(res_str))
-    dec_kernel_sizes = []
-    for res_str in os.environ["DEC_KERNELS_DELIM"].split("_"):
-        if len(res_str) > 0:
-            dec_kernel_sizes.append(int(res_str))
-    dec_upsample_sizes = []
-    for res_str in os.environ["DEC_UPSAMPLES_DELIM"].split("_"):
-        if len(res_str) > 0:
-            dec_upsample_sizes.append(int(res_str))
-
-    activation = os.environ["ACTIVATION_FUNC"]
-
-    # If we're running as a denoiser or phone, only keep the clean class
-    if denoiser or phone or e2e:
-        decoder_classes = ["clean"]
-    else:
-        decoder_classes = []
-        for res_str in os.environ["DECODER_CLASSES_DELIM"].split("_"):
-            if len(res_str) > 0:
-                decoder_classes.append(res_str)
-
+    
     use_batch_norm = True if os.environ["USE_BATCH_NORM"] == "true" else False
-    weight_init = os.environ["WEIGHT_INIT"]
     
-    if domain_adversarial:
-        domain_adv_fc_sizes = []
-        for res_str in os.environ["DOMAIN_ADV_FC_DELIM"].split("_"):
-            if len(res_str) > 0:
-                domain_adv_fc_sizes.append(int(res_str))
-        domain_adv_activation = os.environ["DOMAIN_ADV_ACTIVATION"]
-    
-    if gan:
-        gan_fc_sizes = []
-        for res_str in os.environ["GAN_FC_DELIM"].split("_"):
-            if len(res_str) > 0:
-                gan_fc_sizes.append(int(res_str))
-        gan_activation = os.environ["GAN_ACTIVATION"]
-    
-    if phone:
-        phone_fc_sizes = []
-        for res_str in os.environ["PHONE_FC_DELIM"].split("_"):
-            if len(res_str) > 0:
-                phone_fc_sizes.append(int(res_str))
-        phone_activation = os.environ["PHONE_ACTIVATION"]
-        num_phones = int(os.environ["NUM_PHONES"])
-    
-    if e2e:
-        e2e_fc_sizes = []
-        for res_str in os.environ["END2END_FC_DELIM"].split("_"):
-            if len(res_str) > 0:
-                e2e_fc_sizes.append(int(res_str))
-        e2e_activation = os.environ["END2END_ACTIVATION"]
-        num_phones = int(os.environ["NUM_PHONES"])
-
-    # Construct autoencoder with our parameters
+       # Construct autoencoder with our parameters
     if domain_adversarial:
         model = CNNDomainAdversarialMultidecoder(freq_dim=freq_dim,
                                 splicing=[left_context, right_context], 
-                                enc_channel_sizes=enc_channel_sizes,
-                                enc_kernel_sizes=enc_kernel_sizes,
-                                enc_downsample_sizes=enc_downsample_sizes,
-                                enc_fc_sizes=enc_fc_sizes,
+                                channel_sizes=channel_sizes,
+                                kernel_sizes=kernel_sizes,
+                                downsample_sizes=downsample_sizes,
+                                fc_sizes=fc_sizes,
                                 latent_dim=latent_dim,
                                 dec_fc_sizes=dec_fc_sizes,
                                 dec_channel_sizes=dec_channel_sizes,
@@ -120,10 +61,10 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
     elif gan:
         model = CNNGANMultidecoder(freq_dim=freq_dim,
                                    splicing=[left_context, right_context], 
-                                   enc_channel_sizes=enc_channel_sizes,
-                                   enc_kernel_sizes=enc_kernel_sizes,
-                                   enc_downsample_sizes=enc_downsample_sizes,
-                                   enc_fc_sizes=enc_fc_sizes,
+                                   channel_sizes=channel_sizes,
+                                   kernel_sizes=kernel_sizes,
+                                   downsample_sizes=downsample_sizes,
+                                   fc_sizes=fc_sizes,
                                    latent_dim=latent_dim,
                                    dec_fc_sizes=dec_fc_sizes,
                                    dec_channel_sizes=dec_channel_sizes,
@@ -138,10 +79,10 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
     elif phone:
         model = CNNPhoneMultidecoder(freq_dim=freq_dim,
                                   splicing=[left_context, right_context], 
-                                  enc_channel_sizes=enc_channel_sizes,
-                                  enc_kernel_sizes=enc_kernel_sizes,
-                                  enc_downsample_sizes=enc_downsample_sizes,
-                                  enc_fc_sizes=enc_fc_sizes,
+                                  channel_sizes=channel_sizes,
+                                  kernel_sizes=kernel_sizes,
+                                  downsample_sizes=downsample_sizes,
+                                  fc_sizes=fc_sizes,
                                   latent_dim=latent_dim,
                                   dec_fc_sizes=dec_fc_sizes,
                                   dec_channel_sizes=dec_channel_sizes,
@@ -157,10 +98,10 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
     elif e2e:
         model = CNNEnd2EndMultidecoder(freq_dim=freq_dim,
                                   splicing=[left_context, right_context], 
-                                  enc_channel_sizes=enc_channel_sizes,
-                                  enc_kernel_sizes=enc_kernel_sizes,
-                                  enc_downsample_sizes=enc_downsample_sizes,
-                                  enc_fc_sizes=enc_fc_sizes,
+                                  channel_sizes=channel_sizes,
+                                  kernel_sizes=kernel_sizes,
+                                  downsample_sizes=downsample_sizes,
+                                  fc_sizes=fc_sizes,
                                   latent_dim=latent_dim,
                                   dec_fc_sizes=dec_fc_sizes,
                                   dec_channel_sizes=dec_channel_sizes,
@@ -176,10 +117,10 @@ def setup_model(domain_adversarial=False, gan=False, denoiser=False, phone=False
     else:
         model = CNNMultidecoder(freq_dim=freq_dim,
                                 splicing=[left_context, right_context], 
-                                enc_channel_sizes=enc_channel_sizes,
-                                enc_kernel_sizes=enc_kernel_sizes,
-                                enc_downsample_sizes=enc_downsample_sizes,
-                                enc_fc_sizes=enc_fc_sizes,
+                                channel_sizes=channel_sizes,
+                                kernel_sizes=kernel_sizes,
+                                downsample_sizes=downsample_sizes,
+                                fc_sizes=fc_sizes,
                                 latent_dim=latent_dim,
                                 dec_fc_sizes=dec_fc_sizes,
                                 dec_channel_sizes=dec_channel_sizes,

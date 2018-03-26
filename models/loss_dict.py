@@ -1,14 +1,13 @@
 # Container to easily track and display multiple loss values for different
 # decoder classes over time
 class LossDict(object):
-    def __init__(self, decoder_classes, domain_adversarial=False, gan=False, denoiser=False, phone=False, e2e=False):
+    def __init__(self, decoder_classes, model_type):
         super().__init__()
 
-        self.domain_adversarial = domain_adversarial
-        self.gan = gan
-        self.denoiser = denoiser
-        self.phone = phone
-        self.e2e = e2e
+        allowed_model_types = ["acoustic_model"]
+        if model_type not in allowed_model_types:
+            raise RuntimeError("Error: model type must be one of %s; got %s instead" % (str(allowed_model_types), model_type))
+        self.model_type = model_type
 
         # Set up hierarchical loss dict
         self.decoder_class_losses = dict()
@@ -19,27 +18,9 @@ class LossDict(object):
             self.decoder_class_losses[decoder_class] = dict()
             self.elements_processed[decoder_class] = dict()
 
-            if not self.denoiser or decoder_class == "clean":
-                self.decoder_class_losses[decoder_class]["autoencoding_recon_loss"] = 0.0
-                self.elements_processed[decoder_class]["autoencoding_recon_loss"] = 0
-
-            if not self.denoiser or decoder_class == "dirty":
-                self.decoder_class_losses[decoder_class]["transformation_recon_loss"] = 0.0
-                self.elements_processed[decoder_class]["transformation_recon_loss"] = 0
-
-            if self.domain_adversarial:
-                self.decoder_class_losses[decoder_class]["domain_adversarial_loss"] = 0.0
-                self.elements_processed[decoder_class]["domain_adversarial_loss"] = 0
-
-            if self.gan:
-                self.decoder_class_losses[decoder_class]["real_gan_loss"] = 0.0
-                self.elements_processed[decoder_class]["real_gan_loss"] = 0
-                self.decoder_class_losses[decoder_class]["fake_gan_loss"] = 0.0
-                self.elements_processed[decoder_class]["fake_gan_loss"] = 0
-
-            if self.phone or self.e2e:
-                self.decoder_class_losses[decoder_class]["phone_loss"] = 0.0
-                self.elements_processed[decoder_class]["phone_loss"] = 0
+            if self.model_type in ["acoustic_model"]:
+                self.decoder_class_losses[decoder_class]["phones_xent"] = 0.0
+                self.elements_processed[decoder_class]["phones_xent"] = 0
 
     def __str__(self):
         output_str = "Losses:\n"
