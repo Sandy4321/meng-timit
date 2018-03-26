@@ -25,6 +25,9 @@ if [ -f $augment_log ]; then
     mv $augment_log $LOG_DIR/augment_gan-$(date +"%F_%T%z").log
 fi
 
+export AUGMENTED_DATA_DIR=${AUGMENTED_DATA}/$DIRTY_DATASET/$EXPT_NAME
+mkdir -p $AUGMENTED_DATA_DIR
+
 augment_dir=$AUGMENTED_DATA_DIR/gan
 mkdir -p $augment_dir/train
 mkdir -p $augment_dir/dev

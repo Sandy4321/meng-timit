@@ -24,6 +24,7 @@ Clean:          Dev 76.0%, Test 75.8%
 Dirty:          Dev 25.5%, Test 28.0%
 
 
+Domain adaptation => trained on clean->dirty
 Single RIR 3/14 augmented
 /data/sls/scratch/atitus5/meng//augmented_data/cnn/timit_dirty_single_rir/LOSS_L1Loss/RECON_true_TRANS_true_ENC_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2_F_512/LATENT_256/DEC_F_512_C_64_64_64_64_64_64_K_3_3_3_3_3_3_P_2_2_2_2_2_2/ACT_ReLU_BN_false_WEIGHT_INIT_xavier_uniform/OPT_Adam_LR_0.001_L2_REG_0.0_EPOCHS_100_BATCH_64/vanilla
 ===============================================================================
@@ -62,8 +63,8 @@ Enhanced:       Dev 28.7%, Test 30.3%
 Clean baseline:
 ===============================================================================
 
-Clean:          Dev 17.4%, Test 19.0%
-Dirty:          Dev 82.2%, Test 81.4%
+Clean:          Dev 17.5%, Test 19.0%
+Dirty:          Dev 82.2%, Test 81.5%
 
 
 Dirty baseline:
