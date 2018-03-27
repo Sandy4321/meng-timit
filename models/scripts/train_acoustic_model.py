@@ -20,6 +20,8 @@ from py_utils.kaldi_data import KaldiParallelPhoneDataset
 # Uses some structure from https://github.com/pytorch/examples/blob/master/vae/main.py
 run_start_t = time.clock()
 
+decoder_class = sys.argv[1]
+
 # Set up feature dimensions
 feat_dim = int(os.environ["FEAT_DIM"])
 left_context = int(os.environ["LEFT_CONTEXT"])
@@ -38,7 +40,7 @@ if on_gpu:
     torch.cuda.manual_seed_all(1)
 
 # Set up the model and associated checkpointing directory
-model = AcousticModel()
+model = AcousticModel(decoder_class=decoder_class)
 print(model, flush=True)
 ckpt_path = model.ckpt_path()
 
@@ -51,24 +53,13 @@ if on_gpu:
     model.cuda()
 
 # Set up data files
-decoder_classes = []
-for res_str in os.environ["ACOUSTIC_MODEL_DECODER_CLASSES_DELIM"].split("_"):
-    if len(res_str) > 0:
-        decoder_classes.append(res_str)
+train_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "train")
+# train_scp = os.path.join(train_scp_dir, "feats.scp")
+train_scp = os.path.join(train_scp_dir, "feats-norm.scp")
 
-train_scps = []
-for decoder_class in decoder_classes:
-    train_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "train")
-    # train_scp_name = os.path.join(train_scp_dir, "feats.scp")
-    train_scp_name = os.path.join(train_scp_dir, "feats-norm.scp")
-    train_scps.append(train_scp_name)
-
-dev_scps = []
-for decoder_class in decoder_classes:
-    dev_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "dev")
-    # dev_scp_name = os.path.join(dev_scp_dir, "feats.scp")
-    dev_scp_name = os.path.join(dev_scp_dir, "feats-norm.scp")
-    dev_scps.append(dev_scp_name)
+dev_scp_dir = os.path.join(os.environ["%s_FEATS" % decoder_class.upper()], "dev")
+# dev_scp = os.path.join(dev_scp_dir, "feats.scp")
+dev_scp = os.path.join(dev_scp_dir, "feats-norm.scp")
 
 train_phone_dir = os.path.join(os.environ["DIRTY_FEATS"], "train")
 train_phone_scp = os.path.join(train_phone_dir, "phones.scp")
@@ -93,11 +84,11 @@ print("Setting up data...", flush=True)
 loader_kwargs = {"num_workers": 1, "pin_memory": True} if on_gpu else {}
 
 print("Setting up train datasets...", flush=True)
-train_dataset = KaldiParallelPhoneDataset(train_scps,
+train_dataset = KaldiParallelPhoneDataset([train_scp],
                                           train_phone_scp,
-                                         left_context=left_context,
-                                         right_context=right_context,
-                                         shuffle_utts=True)
+                                          left_context=left_context,
+                                          right_context=right_context,
+                                          shuffle_utts=True)
 train_loader = DataLoader(train_dataset,
                           batch_size=batch_size,
                           shuffle=False,
@@ -107,7 +98,7 @@ print("Using %d train features (%d batches)" % (len(train_dataset),
       flush=True)
 
 print("Setting up dev datasets...", flush=True)
-dev_dataset = KaldiParallelPhoneDataset(dev_scps,
+dev_dataset = KaldiParallelPhoneDataset([dev_scp],
                                         dev_phone_scp,
                                         left_context=left_context,
                                         right_context=right_context,
@@ -132,26 +123,18 @@ def train(epoch):
     model.train()
 
     # Set up some bookkeeping on loss values
-    decoder_class_losses = LossDict(decoder_classes, "acoustic_model")
+    decoder_class_losses = LossDict([decoder_class], "acoustic_model")
     batches_processed = 0
 
     for batch_idx, (all_feats, all_targets, phones) in enumerate(train_loader):
-        # Get data for each decoder class
-        feat_dict = dict()
-        targets_dict = dict()
-        for i in range(len(all_feats)):
-            decoder_class = decoder_classes[i]
-
-            feats = all_feats[i]
-            targets = all_targets[i]
-            if on_gpu:
-                feats = feats.cuda()
-                targets = targets.cuda()
-            feats = Variable(feats)
-            targets = Variable(targets)
-
-            feat_dict[decoder_class] = feats
-            targets_dict[decoder_class] = targets
+        # Get data for the decoder class
+        feats = all_feats[0]
+        targets = all_targets[0]
+        if on_gpu:
+            feats = feats.cuda()
+            targets = targets.cuda()
+        feats = Variable(feats)
+        targets = Variable(targets)
 
         # Set up phones
         if on_gpu:
@@ -160,21 +143,16 @@ def train(epoch):
         
         # Phone classifier training
         optimizer.zero_grad()
-        total_loss = 0.0
-        for source_class in decoder_classes:
-            feats = feat_dict[source_class]
 
-            # Forward pass through phone classifier
-            log_probs = model.classify(feats)
+        # Forward pass through phone classifier
+        log_probs = model.classify(feats)
 
-            # Compute class loss and backward pass
-            c_loss = class_loss(log_probs, phones)
-            total_loss += c_loss
-
-            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
+        # Compute class loss and backward pass
+        c_loss = class_loss(log_probs, phones)
+        decoder_class_losses.add(decoder_class, {"phones_xent": c_loss.data[0]})
 
         # Update generator
-        total_loss.backward()
+        c_loss.backward()
         optimizer.step()
 
         # Print updates, if any
@@ -192,27 +170,19 @@ def train(epoch):
 def test(epoch, loader):
     model.eval()
 
-    decoder_class_losses = LossDict(decoder_classes, "acoustic_model")
+    decoder_class_losses = LossDict([decoder_class], "acoustic_model")
     batches_processed = 0
 
     for batch_idx, (all_feats, all_targets, phones) in enumerate(loader):
-        # Get data for each decoder class
-        feat_dict = dict()
-        targets_dict = dict()
-        for i in range(len(all_feats)):
-            decoder_class = decoder_classes[i]
-
-            # Set to volatile so history isn't saved (i.e., not training time)
-            feats = all_feats[i]
-            targets = all_targets[i]
-            if on_gpu:
-                feats = feats.cuda()
-                targets = targets.cuda()
-            feats = Variable(feats, volatile=True)
-            targets = Variable(targets, volatile=True)
-
-            feat_dict[decoder_class] = feats
-            targets_dict[decoder_class] = targets
+        # Get data for the decoder class
+        # Set to volatile so history isn't saved (i.e., not training time)
+        feats = all_feats[0]
+        targets = all_targets[0]
+        if on_gpu:
+            feats = feats.cuda()
+            targets = targets.cuda()
+        feats = Variable(feats, volatile=True)
+        targets = Variable(targets, volatile=True)
         
         # Set up phones
         if on_gpu:
@@ -220,15 +190,13 @@ def test(epoch, loader):
         phones = Variable(phones, volatile=True)
 
         # Phone classifier testing
-        for source_class in decoder_classes:
-            feats = feat_dict[source_class]
 
-            # Forward pass through phone classifier
-            log_probs = model.classify(feats)
+        # Forward pass through phone classifier
+        log_probs = model.classify(feats)
 
-            # Compute class loss and backward pass
-            c_loss = class_loss(log_probs, phones)
-            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
+        # Compute class loss and backward pass
+        c_loss = class_loss(log_probs, phones)
+        decoder_class_losses.add(decoder_class, {"phones_xent": c_loss.data[0]})
         
         batches_processed += 1
 

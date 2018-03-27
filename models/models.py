@@ -188,7 +188,6 @@ class PhoneClassifier(nn.Module):
 
         # Setup initial parameters
         read_base_config(self)
-        read_acoustic_model_config(self)
 
         self.phone_layers = OrderedDict()
         current_fc_dim = self.latent_dim
@@ -213,18 +212,19 @@ class PhoneClassifier(nn.Module):
 
 # Acoustic model used either as standalone module or submodule of more complex networks
 class AcousticModel(nn.Module):
-    def __init__(self):
+    def __init__(self, decoder_class="clean"):
         super(AcousticModel, self).__init__()
+
+        self.decoder_class = decoder_class
 
         # Setup initial parameters
         read_base_config(self)
-        read_acoustic_model_config(self)
 
         self.encoder = Encoder()
         self.phone_classifier = PhoneClassifier()
 
     def ckpt_path(self): 
-        return os.path.join(self.model_dir, "best_acoustic_model.pth.tar")
+        return os.path.join(self.model_dir, "best_acoustic_model_%s.pth.tar" % self.decoder_class)
 
     def classify(self, feats):
         latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
@@ -309,22 +309,17 @@ def read_base_config(model):
 
     model.model_dir = os.environ["MODEL_DIR"]
 
-    # Default parameters
-    model.activation = "ReLU"
-    model.weight_init = "xavier_uniform"
-
-def read_acoustic_model_config(model):
     model.phone_fc_sizes = []
     for res_str in os.environ["PHONE_FC_DELIM"].split("_"):
         if len(res_str) > 0:
             model.phone_fc_sizes.append(int(res_str))
 
-    model.acoustic_model_decoder_classes = []
-    for res_str in os.environ["ACOUSTIC_MODEL_DECODER_CLASSES_DELIM"].split("_"):
-        if len(res_str) > 0:
-            model.acoustic_model_decoder_classes.append(res_str)
-
     model.num_phones = int(os.environ["NUM_PHONES"])
+    
+    # Default parameters
+    model.activation = "ReLU"
+    model.weight_init = "xavier_uniform"
+
 
 def init_weights(weight_init, layer, layer_name):
     if "xavier" in weight_init:

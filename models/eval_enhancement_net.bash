@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p cpu
+#SBATCH -p 630
 #SBATCH -n1
 #SBATCH -N1-1
 #SBATCH -c 16
@@ -11,7 +11,6 @@ echo "STARTING ENHANCEMENT NET EVAL JOB"
 
 . ./path.sh
 . ./models/base_config.sh
-. ./models/acoustic_model_config.sh
 
 echo "Setting up environment..."
 export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/lib64:$LD_LIBRARY_PATH
@@ -39,7 +38,7 @@ for source_class in clean dirty; do
     for subdir in dev test; do
         echo "Scoring data in $subdir"
         
-        dir=$LOG_DIR/$subdir/$source_class
+        dir=$LOG_DIR/enhancement_net/$subdir/$source_class
         mkdir -p $dir
         
         num_jobs=10

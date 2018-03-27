@@ -13,7 +13,12 @@ echo "STARTING ACOUSTIC MODEL TRAINING JOB"
 
 . ./path.sh
 . ./models/base_config.sh
-. ./models/acoustic_model_config.sh
+
+if [ $# -ne 1 ]; then
+    echo "Need to provide decoder class name"
+    exit 1
+fi
+decoder_class=$1
 
 echo "Setting up environment..."
 export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/lib64:$LD_LIBRARY_PATH
@@ -64,13 +69,13 @@ if [ ! -f $DIRTY_FEATS/dev/phones.scp ]; then
 fi
 echo "Dev phone files ready"
 
-train_log=$LOG_DIR/train_acoustic_model_${ACOUSTIC_MODEL_DECODER_CLASSES_DELIM}.log
+train_log=$LOG_DIR/train_acoustic_model_${decoder_class}.log
 if [ -f $train_log ]; then
     # Move old log
-    mv $train_log $LOG_DIR/train_acoustic_model_${ACOUSTIC_MODEL_DECODER_CLASSES_DELIM}-$(date +"%F_%T%z").log
+    mv $train_log $LOG_DIR/train_acoustic_model_${decoder_class}-$(date +"%F_%T%z").log
 fi
 
 echo "Training model..."
-python3 models/scripts/train_acoustic_model.py &> $train_log
+python3 models/scripts/train_acoustic_model.py $decoder_class &> $train_log
 
 echo "DONE ACOUSTIC MODEL TRAINING JOB"

@@ -14,7 +14,8 @@ sys.path.append("./models")
 from models import AcousticModel
 from py_utils.kaldi_data import KaldiEvalDataset
 
-scp_file = sys.argv[1]
+decoder_class = sys.argv[1]
+scp_file = sys.argv[2]
 
 # Override default pipe handling so that Python doesn't start writing to closed pipe
 # and cause a BrokenPipeError
@@ -36,7 +37,7 @@ if on_gpu:
     torch.cuda.manual_seed_all(1)
 
 # Set up the model and associated checkpointing directory
-model = AcousticModel()
+model = AcousticModel(decoder_class=decoder_class)
 ckpt_path = model.ckpt_path()
 if on_gpu:
     model.cuda()

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p cpu
+#SBATCH -p 630
 #SBATCH -n1
 #SBATCH -N1-1
 #SBATCH -c 16
@@ -11,7 +11,12 @@ echo "STARTING ACOUSTIC MODEL EVAL JOB"
 
 . ./path.sh
 . ./models/base_config.sh
-. ./models/acoustic_model_config.sh
+
+if [ $# -ne 1 ]; then
+    echo "Need to provide decoder class name"
+    exit 1
+fi
+decoder_class=$1
 
 echo "Setting up environment..."
 export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/lib64:$LD_LIBRARY_PATH
@@ -21,10 +26,10 @@ echo "Environment set up."
 lang=$CLEAN_RECIPE/exp/tri3/graph
 model=$CLEAN_RECIPE/exp/tri3_ali/final.mdl
 
-eval_log=$LOG_DIR/eval_acoustic_model_${ACOUSTIC_MODEL_DECODER_CLASSES_DELIM}.log
+eval_log=$LOG_DIR/eval_acoustic_model_${decoder_class}.log
 if [ -f $eval_log ]; then
     # Move old log
-    mv $eval_log $LOG_DIR/eval_acoustic_model_${ACOUSTIC_MODEL_DECODER_CLASSES_DELIM}-$(date +"%F_%T%z").log
+    mv $eval_log $LOG_DIR/eval_acoustic_model_${decoder_class}-$(date +"%F_%T%z").log
 fi
 
 # Decode and evaluate the acoustic model
@@ -39,7 +44,7 @@ for source_class in clean dirty; do
     for subdir in dev test; do
         echo "Scoring data in $subdir"
         
-        dir=$LOG_DIR/$subdir/$source_class
+        dir=$LOG_DIR/acoustic_model_${decoder_class}/$subdir/$source_class
         mkdir -p $dir
         
         num_jobs=10
@@ -56,7 +61,7 @@ for source_class in clean dirty; do
             # Evaluate model, print log probabilities and generate lattices
             echo "Generating lattices..."
             $UTILS/run.pl JOB=1:$num_jobs $dir/decode-JOB.log \
-                python3 models/scripts/eval_acoustic_model.py $feats/$subdir/feats-norm.JOB.scp \
+                python3 models/scripts/eval_acoustic_model.py $decoder_class $feats/$subdir/feats-norm.JOB.scp \
                     \| $PY_UTILS/batch2ark.py \
                     \| latgen-faster-mapped \
                     --max-active=7000 \

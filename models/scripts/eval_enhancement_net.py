@@ -35,13 +35,13 @@ torch.manual_seed(1)
 if on_gpu:
     torch.cuda.manual_seed_all(1)
 
-# Set up baseline model and associated checkpointing directory
-acoustic_model = AcousticModel()
+# Set up baseline clean acoustic model and associated checkpointing directory
+acoustic_model = AcousticModel(decoder_class="clean")
 am_ckpt_path = acoustic_model.ckpt_path()
 if on_gpu:
     acoustic_model.cuda()
 am_ckpt = torch.load(am_ckpt_path, map_location=lambda storage,loc: storage)
-acoustic_model.load_state_dict(ckpt["state_dict"])
+acoustic_model.load_state_dict(am_ckpt["state_dict"])
 acoustic_model.eval()
 
 # Set up enhancement model and associated checkpointing directory
@@ -50,7 +50,7 @@ en_ckpt_path = enhancement_model.ckpt_path()
 if on_gpu:
     enhancement_model.cuda()
 en_ckpt = torch.load(en_ckpt_path, map_location=lambda storage,loc: storage)
-enhancement_model.load_state_dict(ckpt["state_dict"])
+enhancement_model.load_state_dict(en_ckpt["state_dict"])
 enhancement_model.eval()
 
 # Set up data files
@@ -88,7 +88,7 @@ for batch_idx, (feats, _, utt_ids) in enumerate(loader):
     en_feats = enhancement_model.forward(spliced_feats_tensor)
     
     # Splice in enhanced features for input to enhancement model
-    en_feats_numpy = en_feats.numpy().reshape((-1, feat_dim))
+    en_feats_numpy = en_feats.cpu().data.numpy().reshape((-1, feat_dim))
     num_frames = en_feats_numpy.shape[0]
     spliced_en_feats = np.empty((num_frames, time_dim, feat_dim))
     for i in range(num_frames):

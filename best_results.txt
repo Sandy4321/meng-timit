@@ -1,4 +1,4 @@
-C_64_128_128_K_5_3_3_P_2_0_2_F__LATENT_1024/BN_false/OPT_Adam_LR_0.001_EPOCHS_35_BATCH_128/PHONE_FC__1024_1024_1024
+C_64_128_128_K_5_3_3_P_2_0_2_LATENT_1024_PHONE_FC__1024_1024/BN_false_OPT_Adam_LR_0.001_EPOCHS_35_BATCH_128
 ================================================================================
 Model                   Dev Clean       Test Clean      Dev Dirty       Test Dirty
 Baseline clean:         21.1%           22.4%           32.3%           32.8%
