@@ -278,6 +278,35 @@ class End2EndPhoneNet(nn.Module):
                                                                             self.freq_dim))
         enhanced_feats = self.decoder(latent_vec, unpool_sizes, pooling_indices)
         return self.acoustic_model.classify(enhanced_feats)
+
+
+# End-to-end phone classifier network with encoder-decoder tied together; reconstruction loss
+class MultitaskNet(nn.Module):
+    def __init__(self):
+        super(MultitaskNet, self).__init__()
+
+        # Setup initial parameters
+        read_base_config(self)
+        
+        self.encoder = Encoder()
+        self.decoder = Decoder()
+        self.acoustic_model = AcousticModel()
+
+    def ckpt_path(self): 
+        return os.path.join(self.model_dir, "best_multitask_net.pth.tar")
+
+    def enhance(self, feats):
+        latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
+                                                                            1,
+                                                                            self.time_dim,
+                                                                            self.freq_dim))
+        return self.decoder(latent_vec, unpool_sizes, pooling_indices)
+
+    def classify(self, enhanced_feats):
+        return self.acoustic_model.classify(enhanced_feats)
+
+    def forward(self, feats):
+        return self.classify(self.enhance(feats))
  
 
 

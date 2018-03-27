@@ -12,7 +12,6 @@ echo "STARTING END-TO-END PHONE NET TRAINING JOB"
 
 . ./path.sh
 . ./models/base_config.sh
-. ./models/acoustic_model_config.sh
 
 echo "Setting up environment..."
 export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:/data/sls/u/meng/skanda/cuda/lib64:$LD_LIBRARY_PATH
