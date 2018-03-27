@@ -21,10 +21,10 @@ echo "Environment set up."
 lang=$CLEAN_RECIPE/exp/tri3/graph
 model=$CLEAN_RECIPE/exp/tri3_ali/final.mdl
 
-eval_log=$LOG_DIR/eval_acoustic_model.log
+eval_log=$LOG_DIR/eval_acoustic_model_${ACOUSTIC_MODEL_DECODER_CLASSES_DELIM}.log
 if [ -f $eval_log ]; then
     # Move old log
-    mv $eval_log $LOG_DIR/eval_acoustic_model-$(date +"%F_%T%z").log
+    mv $eval_log $LOG_DIR/eval_acoustic_model_${ACOUSTIC_MODEL_DECODER_CLASSES_DELIM}-$(date +"%F_%T%z").log
 fi
 
 # Decode and evaluate the acoustic model

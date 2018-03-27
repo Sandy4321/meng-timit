@@ -227,10 +227,10 @@ class AcousticModel(nn.Module):
         return os.path.join(self.model_dir, "best_acoustic_model.pth.tar")
 
     def classify(self, feats):
-        latent_vec, fc_input_size, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
-					                                                   1,
-                                             						   self.time_dim,
-					                                                   self.freq_dim))
+        latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
+		                                                            1,
+                                                                            self.time_dim,
+                                                                            self.freq_dim))
         return self.phone_classifier(latent_vec)
 
 
@@ -254,7 +254,31 @@ class EnhancementNet(nn.Module):
                                                                             self.time_dim,
                                                                             self.freq_dim))
         return self.decoder(latent_vec, unpool_sizes, pooling_indices)
+
+
+# End-to-end phone classifier network with encoder-decoder tied together; no reconstruction loss
+class End2EndPhoneNet(nn.Module):
+    def __init__(self):
+        super(End2EndPhoneNet, self).__init__()
+
+        # Setup initial parameters
+        read_base_config(self)
         
+        self.encoder = Encoder()
+        self.decoder = Decoder()
+        self.acoustic_model = AcousticModel()
+
+    def ckpt_path(self): 
+        return os.path.join(self.model_dir, "best_end2end_phone_net.pth.tar")
+
+    def classify(self, feats):
+        latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
+                                                                            1,
+                                                                            self.time_dim,
+                                                                            self.freq_dim))
+        enhanced_feats = self.decoder(latent_vec, unpool_sizes, pooling_indices)
+        return self.acoustic_model.classify(enhanced_feats)
+ 
 
 
 # Utils for setting up model parameters from environment vars

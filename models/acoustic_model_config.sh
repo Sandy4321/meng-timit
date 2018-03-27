@@ -10,7 +10,7 @@ export CLEAN_RECIPE=${RECIPES}/100_rir_baseline_clean
 # export NUM_PHONES=2020
 export NUM_PHONES=$(am-info --print-args=false $CLEAN_RECIPE/exp/tri3_ali/final.mdl | grep pdfs | awk '{print $NF}')
 
-export EXPT_NAME="$EXPT_NAME/PHONE_FC_${PHONE_FC_DELIM}_CLASS_${ACOUSTIC_MODEL_DECODER_CLASSES_DELIM}"
+export EXPT_NAME="$EXPT_NAME/PHONE_FC_${PHONE_FC_DELIM}"
 
 export MODEL_DIR=${MODELS}/$DIRTY_DATASET/$EXPT_NAME
 mkdir -p $MODEL_DIR
