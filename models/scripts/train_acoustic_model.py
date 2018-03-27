@@ -86,7 +86,7 @@ def class_loss(log_probs, target_class):
 # Set up optimizer and associated learning rate scheduler
 optimizer = getattr(optim, optimizer_name)(model.parameters(),
                                            lr=learning_rate)
-patience = 3
+patience = 1
 scheduler = ReduceLROnPlateau(optimizer, 'min', patience=patience, verbose=True)
 
 print("Setting up data...", flush=True)

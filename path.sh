@@ -28,6 +28,7 @@ mkdir -p $RECIPES
 
 export STEPS=$MENG_ROOT/steps
 export UTILS=$MENG_ROOT/utils
+export PY_UTILS=$MENG_ROOT/py_utils
 
 # Change to env-cpu if running just on CPU
 export TRAIN_ENV=env-gpu     

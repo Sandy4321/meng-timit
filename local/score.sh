@@ -54,21 +54,13 @@ cp $data/glm $dir/scoring/glm_39phn
 if [ $stage -le 0 ]; then
   # Get the phone-sequence on the best-path:
 
-  # for LMWT in $(seq $min_lmwt $max_lmwt); do
-  #   $cmd JOB=1:$nj $dir/scoring/log/best_path.$LMWT.JOB.log \
-  #     lattice-align-phones $model "ark:gunzip -c $dir/lat.JOB.gz|" ark:- \| \
-  #     lattice-to-ctm-conf --acoustic-scale=$(bc <<<"scale=8; 1/$LMWT*$mbr_scale") --lm-scale=$mbr_scale ark:- $dir/scoring/$LMWT.JOB.ctm || exit 1;
-  #   cat $dir/scoring/$LMWT.*.ctm | sort > $dir/scoring/$LMWT.ctm
-  #   rm $dir/scoring/$LMWT.*.ctm
-  # done
-
-  # MODIFIED TO RUN LMWTs IN PARALLEL, ASSUMING ONE LATTICE
-  if [ ! -f $dir/aligned_phones.lats ]; then
-      lattice-align-phones $model "ark:gunzip -c $dir/lat.1.gz|" ark:$dir/aligned_phones.lats
-  fi
-  $cmd LMWT=$min_lmwt:$max_lmwt $dir/scoring/log/best_path.LMWT.log \
-      local/lattice-to-ctm-conf-parallel.sh LMWT $mbr_scale $dir/aligned_phones.lats \
-      \| sort '>' $dir/scoring/LMWT.ctm || exit 1;
+  for LMWT in $(seq $min_lmwt $max_lmwt); do
+    $cmd JOB=1:$nj $dir/scoring/log/best_path.$LMWT.JOB.log \
+      lattice-align-phones $model "ark:gunzip -c $dir/lat.JOB.gz|" ark:- \| \
+      lattice-to-ctm-conf --acoustic-scale=$(bc <<<"scale=8; 1/$LMWT*$mbr_scale") --lm-scale=$mbr_scale ark:- $dir/scoring/$LMWT.JOB.ctm || exit 1;
+    cat $dir/scoring/$LMWT.*.ctm | sort > $dir/scoring/$LMWT.ctm
+    rm $dir/scoring/$LMWT.*.ctm
+  done
 fi
 
 if [ $stage -le 1 ]; then

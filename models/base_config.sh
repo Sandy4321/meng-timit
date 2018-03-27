@@ -6,9 +6,9 @@ export LEARNING_RATE=0.001
 export EPOCHS=35
 export BATCH_SIZE=128
 
-export CHANNELS=( 64 128 128 )
-export KERNELS=( 5 3 3 )        # Assume square kernels (AxA)
-export DOWNSAMPLES=( 2 0 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
+export CHANNELS=( 64 128 128 128 128 )
+export KERNELS=( 5 3 3 3 3 )        # Assume square kernels (AxA)
+export DOWNSAMPLES=( 2 0 2 0 0 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
 export FC=( )     # Fully-connected layers following conv layers
 
 export LATENT_DIM=1024
