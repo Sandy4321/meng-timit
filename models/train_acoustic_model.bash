@@ -64,10 +64,10 @@ if [ ! -f $DIRTY_FEATS/dev/phones.scp ]; then
 fi
 echo "Dev phone files ready"
 
-train_log=$LOG_DIR/train.log
+train_log=$LOG_DIR/train_acoustic_model.log
 if [ -f $train_log ]; then
     # Move old log
-    mv $train_log $LOG_DIR/train-$(date +"%F_%T%z").log
+    mv $train_log $LOG_DIR/train_acoustic_model-$(date +"%F_%T%z").log
 fi
 
 echo "Training model..."

@@ -4,7 +4,7 @@ class LossDict(object):
     def __init__(self, decoder_classes, model_type):
         super().__init__()
 
-        allowed_model_types = ["acoustic_model"]
+        allowed_model_types = ["acoustic_model", "enhancement_net"]
         if model_type not in allowed_model_types:
             raise RuntimeError("Error: model type must be one of %s; got %s instead" % (str(allowed_model_types), model_type))
         self.model_type = model_type
@@ -21,6 +21,14 @@ class LossDict(object):
             if self.model_type in ["acoustic_model"]:
                 self.decoder_class_losses[decoder_class]["phones_xent"] = 0.0
                 self.elements_processed[decoder_class]["phones_xent"] = 0
+
+            if self.model_type in ["enhancement_net"]:
+                if decoder_class == "clean":
+                    self.decoder_class_losses[decoder_class]["reconstruction_loss"] = 0.0
+                    self.elements_processed[decoder_class]["reconstruction_loss"] = 0
+                elif decoder_class == "dirty":
+                    self.decoder_class_losses[decoder_class]["enhancement_loss"] = 0.0
+                    self.elements_processed[decoder_class]["enhancement_loss"] = 0
 
     def __str__(self):
         output_str = "Losses:\n"
