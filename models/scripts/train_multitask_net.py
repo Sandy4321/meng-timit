@@ -14,8 +14,8 @@ sys.path.append("./")
 sys.path.append("./models")
 
 from loss_dict import LossDict
-from models import EnhancementNet
-from py_utils.kaldi_data import KaldiParallelDataset
+from models import MultitaskNet
+from py_utils.kaldi_data import KaldiParallelPhoneDataset
 
 # Uses some structure from https://github.com/pytorch/examples/blob/master/vae/main.py
 run_start_t = time.clock()
@@ -38,7 +38,7 @@ if on_gpu:
     torch.cuda.manual_seed_all(1)
 
 # Set up the model and associated checkpointing directory
-model = EnhancementNet()
+model = MultitaskNet()
 print(model, flush=True)
 ckpt_path = model.ckpt_path()
 
@@ -67,12 +67,24 @@ for decoder_class in decoder_classes:
     dev_scp_name = os.path.join(dev_scp_dir, "feats-norm.scp")
     dev_scps.append(dev_scp_name)
 
-# Set up loss function
-criterion = nn.MSELoss()
+train_phone_dir = os.path.join(os.environ["DIRTY_FEATS"], "train")
+train_phone_scp = os.path.join(train_phone_dir, "phones.scp")
+
+dev_phone_dir = os.path.join(os.environ["DIRTY_FEATS"], "dev")
+dev_phone_scp = os.path.join(dev_phone_dir, "phones.scp")
+
+# Set up loss functions
+nll_criterion = nn.NLLLoss()
 if on_gpu:
-    criterion = criterion.cuda()
+    nll_criterion = nll_criterion.cuda()
+def class_loss(log_probs, target_class):
+    return nll_criterion(log_probs, target_class.view((-1)))
+
+recon_criterion = nn.MSELoss()
+if on_gpu:
+    recon_criterion = recon_criterion.cuda()
 def reconstruction_loss(recon_x, x):
-    return criterion(recon_x, x)
+    return recon_criterion(recon_x, x)
 
 # Set up optimizer and associated learning rate scheduler
 optimizer = getattr(optim, optimizer_name)(model.parameters(),
@@ -84,10 +96,11 @@ print("Setting up data...", flush=True)
 loader_kwargs = {"num_workers": 1, "pin_memory": True} if on_gpu else {}
 
 print("Setting up train datasets...", flush=True)
-train_dataset = KaldiParallelDataset(train_scps,
-                                     left_context=left_context,
-                                     right_context=right_context,
-                                     shuffle_utts=True)
+train_dataset = KaldiParallelPhoneDataset(train_scps,
+                                          train_phone_scp,
+                                          left_context=left_context,
+                                          right_context=right_context,
+                                          shuffle_utts=True)
 train_loader = DataLoader(train_dataset,
                           batch_size=batch_size,
                           shuffle=False,
@@ -97,10 +110,11 @@ print("Using %d train features (%d batches)" % (len(train_dataset),
       flush=True)
 
 print("Setting up dev datasets...", flush=True)
-dev_dataset = KaldiParallelDataset(dev_scps,
-                                   left_context=left_context,
-                                   right_context=right_context,
-                                   shuffle_utts=True)
+dev_dataset = KaldiParallelPhoneDataset(dev_scps,
+                                        dev_phone_scp,
+                                        left_context=left_context,
+                                        right_context=right_context,
+                                        shuffle_utts=True)
 dev_loader = DataLoader(dev_dataset,
                         batch_size=batch_size,
                         shuffle=False,
@@ -121,10 +135,10 @@ def train(epoch):
     model.train()
 
     # Set up some bookkeeping on loss values
-    decoder_class_losses = LossDict(decoder_classes, "enhancement_net")
+    decoder_class_losses = LossDict(decoder_classes, "multitask_net")
     batches_processed = 0
 
-    for batch_idx, (all_feats, all_targets) in enumerate(train_loader):
+    for batch_idx, (all_feats, all_targets, phones) in enumerate(train_loader):
         # Get data for each decoder class
         feat_dict = dict()
         targets_dict = dict()
@@ -141,27 +155,47 @@ def train(epoch):
 
             feat_dict[decoder_class] = feats
             targets_dict[decoder_class] = targets
+
+        # Set up phones
+        if on_gpu:
+            phones = phones.cuda()
+        phones = Variable(phones)
         
+        # Step 1: Phone classifier training
         optimizer.zero_grad()
         total_loss = 0.0
+        for source_class in decoder_classes:
+            feats = feat_dict[source_class]
 
-        # Step 1: reconstruction/clean->clean
-        feats = feat_dict["clean"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        total_loss += r_loss
-        decoder_class_losses.add("clean", {"reconstruction_loss": r_loss.data[0]})
+            # Forward pass through full network
+            log_probs = model.forward(feats)
+
+            # Compute class loss
+            c_loss = class_loss(log_probs, phones)
+            total_loss += c_loss
+
+            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
+        total_loss.backward()
+        optimizer.step()
         
-        # Step 2: enhancement/dirty->clean
-        feats = feat_dict["dirty"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        total_loss += r_loss
-        decoder_class_losses.add("dirty", {"enhancement_loss": r_loss.data[0]})
+        # Step 2: Enhancement net training
+        optimizer.zero_grad()
+        total_loss = 0.0
+        for source_class in decoder_classes:
+            feats = feat_dict[source_class]
+            targets = targets_dict["clean"]
 
-        # Update generator
+            # Forward pass through just enhancement net
+            enhanced_feats = model.enhance(feats)
+
+            # Compute reconstruction loss
+            r_loss = reconstruction_loss(enhanced_feats, targets)
+            total_loss += r_loss
+
+            if source_class == "clean":
+                decoder_class_losses.add(source_class, {"reconstruction_loss": r_loss.data[0]})
+            else:
+                decoder_class_losses.add(source_class, {"enhancement_loss": r_loss.data[0]})
         total_loss.backward()
         optimizer.step()
 
@@ -177,13 +211,13 @@ def train(epoch):
             print(decoder_class_losses, flush=True)
     return decoder_class_losses
 
-def test(loader):
+def test(epoch, loader):
     model.eval()
 
-    decoder_class_losses = LossDict(decoder_classes, "enhancement_net")
+    decoder_class_losses = LossDict(decoder_classes, "multitask_net")
     batches_processed = 0
 
-    for batch_idx, (all_feats, all_targets) in enumerate(loader):
+    for batch_idx, (all_feats, all_targets, phones) in enumerate(loader):
         # Get data for each decoder class
         feat_dict = dict()
         targets_dict = dict()
@@ -202,19 +236,31 @@ def test(loader):
             feat_dict[decoder_class] = feats
             targets_dict[decoder_class] = targets
         
-        # Step 1: reconstruction/clean->clean
-        feats = feat_dict["clean"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        decoder_class_losses.add("clean", {"reconstruction_loss": r_loss.data[0]})
-        
-        # Step 2: enhancement/dirty->clean
-        feats = feat_dict["dirty"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        decoder_class_losses.add("dirty", {"enhancement_loss": r_loss.data[0]})
+        # Set up phones
+        if on_gpu:
+            phones = phones.cuda()
+        phones = Variable(phones, volatile=True)
+
+        for source_class in decoder_classes:
+            feats = feat_dict[source_class]
+            targets = targets_dict["clean"]
+
+            # Forward pass through just enhancement net
+            enhanced_feats = model.enhance(feats)
+
+            # Compute reconstruction loss
+            r_loss = reconstruction_loss(enhanced_feats, targets)
+            if source_class == "clean":
+                decoder_class_losses.add(source_class, {"reconstruction_loss": r_loss.data[0]})
+            else:
+                decoder_class_losses.add(source_class, {"enhancement_loss": r_loss.data[0]})
+            
+            # Forward pass enhanced feats through phone classifier
+            log_probs = model.classify(enhanced_feats)
+
+            # Compute class loss
+            c_loss = class_loss(log_probs, phones)
+            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
         
         batches_processed += 1
 
@@ -238,7 +284,7 @@ for epoch in range(1, epochs + 1):
     print("\nEPOCH %d TRAIN" % epoch, flush=True)
     print(train_loss_dict, flush=True)
             
-    dev_loss_dict = test(dev_loader)
+    dev_loss_dict = test(epoch, dev_loader)
     print("\nEPOCH %d DEV" % epoch, flush=True)
     print(dev_loss_dict, flush=True)
     

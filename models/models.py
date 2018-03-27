@@ -307,7 +307,33 @@ class MultitaskNet(nn.Module):
 
     def forward(self, feats):
         return self.classify(self.enhance(feats))
- 
+
+
+# Multidecoder used to perform speech enhancement
+class EnhancementMultidecoder(nn.Module):
+    def __init__(self):
+        super(EnhancementMultidecoder, self).__init__()
+
+        # Setup initial parameters
+        read_base_config(self)
+        
+        self.encoder = Encoder()
+        self.decoder_classes = ["clean", "dirty"]
+        self.decoders = dict()
+        for decoder_class in self.decoder_classes:
+            self.decoders[decoder_class] = Decoder()
+            self.add_module("decoder_%s" % decoder_class, self.decoders[decoder_class])
+
+    def ckpt_path(self): 
+        return os.path.join(self.model_dir, "best_enhancement_md.pth.tar")
+
+    def forward_decoder(self, feats, decoder_class):
+        latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
+                                                                            1,
+                                                                            self.time_dim,
+                                                                            self.freq_dim))
+        return self.decoders[decoder_class](latent_vec, unpool_sizes, pooling_indices)
+
 
 
 # Utils for setting up model parameters from environment vars

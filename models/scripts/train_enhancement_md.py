@@ -14,7 +14,7 @@ sys.path.append("./")
 sys.path.append("./models")
 
 from loss_dict import LossDict
-from models import EnhancementNet
+from models import EnhancementMultidecoder
 from py_utils.kaldi_data import KaldiParallelDataset
 
 # Uses some structure from https://github.com/pytorch/examples/blob/master/vae/main.py
@@ -38,7 +38,7 @@ if on_gpu:
     torch.cuda.manual_seed_all(1)
 
 # Set up the model and associated checkpointing directory
-model = EnhancementNet()
+model = EnhancementMultidecoder()
 print(model, flush=True)
 ckpt_path = model.ckpt_path()
 
@@ -121,7 +121,7 @@ def train(epoch):
     model.train()
 
     # Set up some bookkeeping on loss values
-    decoder_class_losses = LossDict(decoder_classes, "enhancement_net")
+    decoder_class_losses = LossDict(decoder_classes, "enhancement_md")
     batches_processed = 0
 
     for batch_idx, (all_feats, all_targets) in enumerate(train_loader):
@@ -145,21 +145,17 @@ def train(epoch):
         optimizer.zero_grad()
         total_loss = 0.0
 
-        # Step 1: reconstruction/clean->clean
-        feats = feat_dict["clean"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        total_loss += r_loss
-        decoder_class_losses.add("clean", {"reconstruction_loss": r_loss.data[0]})
-        
-        # Step 2: enhancement/dirty->clean
-        feats = feat_dict["dirty"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        total_loss += r_loss
-        decoder_class_losses.add("dirty", {"enhancement_loss": r_loss.data[0]})
+        for source_class in decoder_classes:
+            for target_class in decoder_classes:
+                feats = feat_dict[source_class]
+                targets = targets_dict[target_class]
+                recon_x = model.forward_decoder(feats, target_class)
+                r_loss = reconstruction_loss(recon_x, targets)
+                total_loss += r_loss
+                if target_class == source_class:
+                    decoder_class_losses.add(source_class, {"reconstruction_loss": r_loss.data[0]})
+                else:
+                    decoder_class_losses.add(source_class, {"transformation_loss": r_loss.data[0]})
 
         # Update generator
         total_loss.backward()
@@ -180,7 +176,7 @@ def train(epoch):
 def test(loader):
     model.eval()
 
-    decoder_class_losses = LossDict(decoder_classes, "enhancement_net")
+    decoder_class_losses = LossDict(decoder_classes, "enhancement_md")
     batches_processed = 0
 
     for batch_idx, (all_feats, all_targets) in enumerate(loader):
@@ -202,19 +198,16 @@ def test(loader):
             feat_dict[decoder_class] = feats
             targets_dict[decoder_class] = targets
         
-        # Step 1: reconstruction/clean->clean
-        feats = feat_dict["clean"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        decoder_class_losses.add("clean", {"reconstruction_loss": r_loss.data[0]})
-        
-        # Step 2: enhancement/dirty->clean
-        feats = feat_dict["dirty"]
-        targets = targets_dict["clean"]
-        recon_x = model.forward(feats)
-        r_loss = reconstruction_loss(recon_x, targets)
-        decoder_class_losses.add("dirty", {"enhancement_loss": r_loss.data[0]})
+        for source_class in decoder_classes:
+            for target_class in decoder_classes:
+                feats = feat_dict[source_class]
+                targets = targets_dict[target_class]
+                recon_x = model.forward_decoder(feats, target_class)
+                r_loss = reconstruction_loss(recon_x, targets)
+                if target_class == source_class:
+                    decoder_class_losses.add(source_class, {"reconstruction_loss": r_loss.data[0]})
+                else:
+                    decoder_class_losses.add(source_class, {"transformation_loss": r_loss.data[0]})
         
         batches_processed += 1
 
