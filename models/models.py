@@ -335,6 +335,39 @@ class EnhancementMultidecoder(nn.Module):
         return self.decoders[decoder_class](latent_vec, unpool_sizes, pooling_indices)
 
 
+# Multidecoder used to perform speech enhancement as well as phone classification
+class MultitaskMultidecoder(nn.Module):
+    def __init__(self):
+        super(MultitaskMultidecoder, self).__init__()
+
+        # Setup initial parameters
+        read_base_config(self)
+        
+        self.encoder = Encoder()
+        self.decoder_classes = ["clean", "dirty"]
+        self.decoders = dict()
+        for decoder_class in self.decoder_classes:
+            self.decoders[decoder_class] = Decoder()
+            self.add_module("decoder_%s" % decoder_class, self.decoders[decoder_class])
+        self.acoustic_model = AcousticModel()
+
+    def ckpt_path(self): 
+        return os.path.join(self.model_dir, "best_multitask_md.pth.tar")
+
+    def enhance(self, feats, decoder_class):
+        latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
+                                                                            1,
+                                                                            self.time_dim,
+                                                                            self.freq_dim))
+        return self.decoders[decoder_class](latent_vec, unpool_sizes, pooling_indices)
+
+    def classify(self, enhanced_feats):
+        return self.acoustic_model.classify(enhanced_feats)
+
+    def forward_decoder(self, feats, decoder_class):
+        return self.classify(self.enhance(feats, decoder_class))
+
+
 
 # Utils for setting up model parameters from environment vars
 

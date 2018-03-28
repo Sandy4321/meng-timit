@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 sys.path.append("./")
 sys.path.append("./models")
 
-from models import AcousticModel, EnhancementNet
+from models import MultitaskMultidecoder
 from py_utils.kaldi_data import KaldiEvalDataset
 
 scp_file = sys.argv[1]
@@ -35,23 +35,14 @@ torch.manual_seed(1)
 if on_gpu:
     torch.cuda.manual_seed_all(1)
 
-# Set up baseline clean acoustic model and associated checkpointing directory
-acoustic_model = AcousticModel(decoder_class="clean")
-am_ckpt_path = acoustic_model.ckpt_path()
+# Set up multitask model and associated checkpointing directory
+model = MultitaskMultidecoder()
+ckpt_path = model.ckpt_path()
 if on_gpu:
-    acoustic_model.cuda()
-am_ckpt = torch.load(am_ckpt_path, map_location=lambda storage,loc: storage)
-acoustic_model.load_state_dict(am_ckpt["state_dict"])
-acoustic_model.eval()
-
-# Set up enhancement model and associated checkpointing directory
-enhancement_model = EnhancementNet()
-en_ckpt_path = enhancement_model.ckpt_path()
-if on_gpu:
-    enhancement_model.cuda()
-en_ckpt = torch.load(en_ckpt_path, map_location=lambda storage,loc: storage)
-enhancement_model.load_state_dict(en_ckpt["state_dict"])
-enhancement_model.eval()
+    model.cuda()
+ckpt = torch.load(ckpt_path, map_location=lambda storage,loc: storage)
+model.load_state_dict(ckpt["state_dict"])
+model.eval()
 
 # Set up data files
 loader_kwargs = {"num_workers": 1, "pin_memory": True} if on_gpu else {}
@@ -67,7 +58,7 @@ for batch_idx, (feats, _, utt_ids) in enumerate(loader):
     # Only one utterance at once
     utt_id = utt_ids[0]
 
-    # Splice in features for input to enhancement model
+    # Splice in features for input to multitask model
     feats_numpy = feats.numpy().reshape((-1, feat_dim))
     num_frames = feats_numpy.shape[0]
     spliced_feats = np.empty((num_frames, time_dim, feat_dim))
@@ -84,11 +75,8 @@ for batch_idx, (feats, _, utt_ids) in enumerate(loader):
         spliced_feats_tensor = spliced_feats_tensor.cuda()
     spliced_feats_tensor = Variable(spliced_feats_tensor, volatile=True)
 
-    # Enhance features
-    en_feats = enhancement_model.forward(spliced_feats_tensor)
-
-    # Compute log probabilities with acoustic model and print to stdout
-    log_probs = acoustic_model.classify(en_feats)
+    # Compute log probabilities with multitask model and print to stdout
+    log_probs = model.forward_decoder(spliced_feats_tensor, "clean")
     print(utt_id, flush=True)
     for i in range(num_frames):
         log_probs_str = " ".join(list(map(str, log_probs.cpu().data.numpy()[i, :].reshape((-1)))))

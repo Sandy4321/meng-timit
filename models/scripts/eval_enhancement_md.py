@@ -87,25 +87,8 @@ for batch_idx, (feats, _, utt_ids) in enumerate(loader):
     # Enhance features
     en_feats = enhancement_model.forward_decoder(spliced_feats_tensor, "clean")
     
-    # Splice in enhanced features for input to enhancement model
-    en_feats_numpy = en_feats.cpu().data.numpy().reshape((-1, feat_dim))
-    num_frames = en_feats_numpy.shape[0]
-    spliced_en_feats = np.empty((num_frames, time_dim, feat_dim))
-    for i in range(num_frames):
-        frame_spliced = np.zeros((time_dim, feat_dim))
-        frame_spliced[left_context - min(i, left_context):left_context, :] = en_feats_numpy[i - min(i, left_context):i, :]
-        frame_spliced[left_context, :] = en_feats_numpy[i, :]
-        frame_spliced[left_context + 1:left_context + 1 + min(num_frames - i - 1, right_context), :] = en_feats_numpy[i + 1:i + 1 + min(num_frames - i - 1, right_context), :]
-
-        spliced_en_feats[i, :, :] = frame_spliced
-        
-    spliced_en_feats_tensor = torch.FloatTensor(spliced_en_feats)
-    if on_gpu:
-        spliced_en_feats_tensor = spliced_en_feats_tensor.cuda()
-    spliced_en_feats_tensor = Variable(spliced_en_feats_tensor, volatile=True)
-
     # Compute log probabilities with acoustic model and print to stdout
-    log_probs = acoustic_model.classify(spliced_en_feats_tensor)
+    log_probs = acoustic_model.classify(en_feats)
     print(utt_id, flush=True)
     for i in range(num_frames):
         log_probs_str = " ".join(list(map(str, log_probs.cpu().data.numpy()[i, :].reshape((-1)))))
