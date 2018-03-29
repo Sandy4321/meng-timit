@@ -6,11 +6,11 @@ export LEARNING_RATE=0.001
 export EPOCHS=35
 export BATCH_SIZE=128
 
-export CHANNELS=( 64 128 )
-export KERNELS=( 5 3 )        # Assume square kernels (AxA)
-export DOWNSAMPLES=( 2 0 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
+export CHANNELS=( 64 128 128 )
+export KERNELS=( 5 3 3 )        # Assume square kernels (AxA)
+export DOWNSAMPLES=( 2 0 2 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
 
-export LATENT_DIM=1024
+export LATENT_DIM=2048
 
 export USE_BATCH_NORM=false
 
@@ -18,7 +18,7 @@ export CHANNELS_DELIM=$(printf "_%s" "${CHANNELS[@]}")
 export KERNELS_DELIM=$(printf "_%s" "${KERNELS[@]}")
 export DOWNSAMPLES_DELIM=$(printf "_%s" "${DOWNSAMPLES[@]}")
 
-export PHONE_FC=( 1024 1024 )
+export PHONE_FC=( 2048 2048 )
 export PHONE_FC_DELIM=$(printf "_%s" "${PHONE_FC[@]}")
 
 export CLEAN_RECIPE=${RECIPES}/100_rir_baseline_clean
