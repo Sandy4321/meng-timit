@@ -15,6 +15,10 @@ fi
 # Now that we're ready, train ALL the models
 model_types=( enhancement_net end2end_phone_net multitask_net enhancement_md multitask_md )
 for model_type in "${model_types[@]}"; do
-    train_job_id=$(sbatch models/train_${model_type}.bash)
+    # Since sbatch now prints "Submitted batch job <X>", need to get last element in
+    # space-delimited array to get the actual Job ID
+    train_job_output=$(sbatch models/train_${model_type}.bash)
+    echo $train_job_output
+    train_job_id=$( python3 -c "print(\"$train_job_output\".split(\" \")[-1])" )
     sbatch --dependency=afterok:$train_job_id models/eval_${model_type}.bash
 done
