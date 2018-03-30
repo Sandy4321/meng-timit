@@ -5,7 +5,7 @@
 #SBATCH -c 4
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32768
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH -J train_multitask_net
 
 echo "STARTING MULTITASK NET TRAINING JOB"
