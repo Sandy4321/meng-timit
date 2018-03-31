@@ -161,17 +161,15 @@ def train(epoch):
             phones = phones.cuda()
         phones = Variable(phones)
         
-        # Step 1: Phone classifier training on enhanced data
+        # Step 1: Phone classifier training on just clean data
         optimizer.zero_grad()
-        total_loss = 0.0
-        for source_class in decoder_classes:
-            feats = feat_dict[source_class]
-            targets = targets_dict["clean"]
-            log_probs = model.forward_decoder(feats, "clean")
-            c_loss = class_loss(log_probs, phones)
-            total_loss += c_loss
-            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
-        total_loss.backward()
+        feats = feat_dict["clean"]
+        log_probs = model.classify(feats)
+
+        c_loss = class_loss(log_probs, phones)
+        decoder_class_losses.add("clean", {"phones_xent": c_loss.data[0]})
+
+        c_loss.backward()
         optimizer.step()
         
         # Step 2: Reconstruction/transformation training
@@ -181,7 +179,7 @@ def train(epoch):
             for target_class in decoder_classes:
                 feats = feat_dict[source_class]
                 targets = targets_dict[target_class]
-                recon_x = model.enhance(feats, target_class)
+                recon_x = model.forward_decoder(feats, target_class)
                 r_loss = reconstruction_loss(recon_x, targets)
                 total_loss += r_loss
                 if target_class == source_class:
@@ -233,9 +231,9 @@ def test(loader):
             phones = phones.cuda()
         phones = Variable(phones, volatile=True)
         
+        # Test reconstruction/transformation
         for source_class in decoder_classes:
             for target_class in decoder_classes:
-                # Test reconstruction/transformation
                 feats = feat_dict[source_class]
                 targets = targets_dict[target_class]
                 recon_x = model.enhance(feats, target_class)
@@ -245,11 +243,11 @@ def test(loader):
                 else:
                     decoder_class_losses.add(source_class, {"transformation_loss": r_loss.data[0]})
 
-                if target_class == "clean":
-                    # Test phone classifier
-                    log_probs = model.classify(recon_x)
-                    c_loss = class_loss(log_probs, phones)
-                    decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
+        # Test phone classifier on clean data
+        feats = feat_dict["clean"]
+        log_probs = model.classify(feats)
+        c_loss = class_loss(log_probs, phones)
+        decoder_class_losses.add("clean", {"phones_xent": c_loss.data[0]})
         
         batches_processed += 1
 

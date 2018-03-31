@@ -51,7 +51,7 @@ if on_gpu:
     model.cuda()
 
 # Set up data files
-decoder_classes = ["clean", "dirty"]
+decoder_classes = ["clean"]     # No phone labels available for dirty data
 
 train_scps = []
 for decoder_class in decoder_classes:
@@ -158,17 +158,17 @@ def train(epoch):
         # Phone classifier training
         optimizer.zero_grad()
         total_loss = 0.0
-        for source_class in decoder_classes:
-            feats = feat_dict[source_class]
 
-            # Forward pass through phone classifier
-            log_probs = model.classify(feats)
+        feats = feat_dict["clean"]
 
-            # Compute class loss and backward pass
-            c_loss = class_loss(log_probs, phones)
-            total_loss += c_loss
+        # Forward pass through phone classifier
+        log_probs = model.classify(feats)
 
-            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
+        # Compute class loss and backward pass
+        c_loss = class_loss(log_probs, phones)
+        total_loss += c_loss
+
+        decoder_class_losses.add("clean", {"phones_xent": c_loss.data[0]})
 
         # Update generator
         total_loss.backward()
@@ -217,15 +217,14 @@ def test(epoch, loader):
         phones = Variable(phones, volatile=True)
 
         # Phone classifier testing
-        for source_class in decoder_classes:
-            feats = feat_dict[source_class]
+        feats = feat_dict["clean"]
 
-            # Forward pass through phone classifier
-            log_probs = model.classify(feats)
+        # Forward pass through phone classifier
+        log_probs = model.classify(feats)
 
-            # Compute class loss and backward pass
-            c_loss = class_loss(log_probs, phones)
-            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
+        # Compute class loss
+        c_loss = class_loss(log_probs, phones)
+        decoder_class_losses.add("clean", {"phones_xent": c_loss.data[0]})
         
         batches_processed += 1
 

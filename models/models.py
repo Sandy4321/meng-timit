@@ -290,7 +290,7 @@ class MultitaskNet(nn.Module):
         
         self.encoder = Encoder()
         self.decoder = Decoder()
-        self.acoustic_model = AcousticModel()
+        self.phone_classifier = PhoneClassifier()
 
     def ckpt_path(self): 
         return os.path.join(self.model_dir, "best_multitask_net.pth.tar")
@@ -302,11 +302,12 @@ class MultitaskNet(nn.Module):
                                                                             self.freq_dim))
         return self.decoder(latent_vec, unpool_sizes, pooling_indices)
 
-    def classify(self, enhanced_feats):
-        return self.acoustic_model.classify(enhanced_feats)
-
-    def forward(self, feats):
-        return self.classify(self.enhance(feats))
+    def classify(self, feats):
+        latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
+		                                                            1,
+                                                                            self.time_dim,
+                                                                            self.freq_dim))
+        return self.phone_classifier(latent_vec)
 
 
 # Multidecoder used to perform speech enhancement
@@ -349,23 +350,24 @@ class MultitaskMultidecoder(nn.Module):
         for decoder_class in self.decoder_classes:
             self.decoders[decoder_class] = Decoder()
             self.add_module("decoder_%s" % decoder_class, self.decoders[decoder_class])
-        self.acoustic_model = AcousticModel()
+        self.phone_classifier = PhoneClassifier()
 
     def ckpt_path(self): 
         return os.path.join(self.model_dir, "best_multitask_md.pth.tar")
 
-    def enhance(self, feats, decoder_class):
+    def forward_decoder(self, feats, decoder_class):
         latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
                                                                             1,
                                                                             self.time_dim,
                                                                             self.freq_dim))
         return self.decoders[decoder_class](latent_vec, unpool_sizes, pooling_indices)
 
-    def classify(self, enhanced_feats):
-        return self.acoustic_model.classify(enhanced_feats)
-
-    def forward_decoder(self, feats, decoder_class):
-        return self.classify(self.enhance(feats, decoder_class))
+    def classify(self, feats):
+        latent_vec, unpool_sizes, pooling_indices = self.encoder(feats.view(-1,
+		                                                            1,
+                                                                            self.time_dim,
+                                                                            self.freq_dim))
+        return self.phone_classifier(latent_vec)
 
 
 

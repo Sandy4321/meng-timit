@@ -161,21 +161,18 @@ def train(epoch):
             phones = phones.cuda()
         phones = Variable(phones)
         
-        # Step 1: Phone classifier training
+        # Step 1: Phone classifier training (for clean data only)
         optimizer.zero_grad()
-        total_loss = 0.0
-        for source_class in decoder_classes:
-            feats = feat_dict[source_class]
+        feats = feat_dict["clean"]
 
-            # Forward pass through full network
-            log_probs = model.forward(feats)
+        # Forward pass through classifier
+        log_probs = model.classify(feats)
 
-            # Compute class loss
-            c_loss = class_loss(log_probs, phones)
-            total_loss += c_loss
+        # Compute class loss
+        c_loss = class_loss(log_probs, phones)
+        decoder_class_losses.add("clean", {"phones_xent": c_loss.data[0]})
 
-            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
-        total_loss.backward()
+        c_loss.backward()
         optimizer.step()
         
         # Step 2: Enhancement net training
@@ -241,6 +238,7 @@ def test(epoch, loader):
             phones = phones.cuda()
         phones = Variable(phones, volatile=True)
 
+        # Test enhancement
         for source_class in decoder_classes:
             feats = feat_dict[source_class]
             targets = targets_dict["clean"]
@@ -255,12 +253,14 @@ def test(epoch, loader):
             else:
                 decoder_class_losses.add(source_class, {"enhancement_loss": r_loss.data[0]})
             
-            # Forward pass enhanced feats through phone classifier
-            log_probs = model.classify(enhanced_feats)
+        # Test phone classifier (clean data only)
+        # Forward pass enhanced feats through phone classifier
+        feats = feat_dict["clean"]
+        log_probs = model.classify(feats)
 
-            # Compute class loss
-            c_loss = class_loss(log_probs, phones)
-            decoder_class_losses.add(source_class, {"phones_xent": c_loss.data[0]})
+        # Compute class loss
+        c_loss = class_loss(log_probs, phones)
+        decoder_class_losses.add("clean", {"phones_xent": c_loss.data[0]})
         
         batches_processed += 1
 
