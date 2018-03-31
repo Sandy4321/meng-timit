@@ -76,7 +76,8 @@ for batch_idx, (feats, _, utt_ids) in enumerate(loader):
     spliced_feats_tensor = Variable(spliced_feats_tensor, volatile=True)
 
     # Compute log probabilities with multitask model and print to stdout
-    log_probs = model.forward_decoder(spliced_feats_tensor, "clean")
+    enhanced_feats = model.forward_decoder(spliced_feats_tensor, "clean")
+    log_probs = model.classify(enhanced_feats)
     print(utt_id, flush=True)
     for i in range(num_frames):
         log_probs_str = " ".join(list(map(str, log_probs.cpu().data.numpy()[i, :].reshape((-1)))))

@@ -13,7 +13,8 @@ else
 fi
 
 # Now that we're ready, train ALL the models
-model_types=( enhancement_net end2end_phone_net multitask_net enhancement_md multitask_md )
+# model_types=( enhancement_net end2end_phone_net multitask_net enhancement_md multitask_md )
+model_types=( end2end_phone_net multitask_net multitask_md )
 for model_type in "${model_types[@]}"; do
     # Since sbatch now prints "Submitted batch job <X>", need to get last element in
     # space-delimited array to get the actual Job ID
