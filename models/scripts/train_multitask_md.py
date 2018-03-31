@@ -236,7 +236,7 @@ def test(loader):
             for target_class in decoder_classes:
                 feats = feat_dict[source_class]
                 targets = targets_dict[target_class]
-                recon_x = model.enhance(feats, target_class)
+                recon_x = model.forward_decoder(feats, target_class)
                 r_loss = reconstruction_loss(recon_x, targets)
                 if target_class == source_class:
                     decoder_class_losses.add(source_class, {"reconstruction_loss": r_loss.data[0]})
