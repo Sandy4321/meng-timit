@@ -27,6 +27,6 @@ Baseline clean:         22.5%           23.5%           33.0%           33.3%
 Baseline dirty:         25.5%           26.1%           28.5%           29.2%
 Enhancement Net:        23.9%           25.2%           29.7%           30.6%
 End2End Phone Net:      22.2%           23.7%           27.0%           27.8%
-Multitask Net:  
-Enhancement MD:
-Multitask MD:
+Multitask Net:          22.6%           23.5%           26.9%           27.5%
+Enhancement MD:         24.2%           25.8%           29.9%           30.9%
+Multitask MD:           23.8%           24.8%           28.5%           28.3%

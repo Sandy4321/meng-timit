@@ -19,8 +19,9 @@ class LossDict(object):
             self.elements_processed[decoder_class] = dict()
 
             if self.model_type in ["acoustic_model", "end2end_phone_net", "multitask_net", "multitask_md"]:
-                self.decoder_class_losses[decoder_class]["phones_xent"] = 0.0
-                self.elements_processed[decoder_class]["phones_xent"] = 0
+                if decoder_class == "clean" or self.model_type == "acoustic_model":
+                    self.decoder_class_losses[decoder_class]["phones_xent"] = 0.0
+                    self.elements_processed[decoder_class]["phones_xent"] = 0
 
             if self.model_type in ["enhancement_net", "multitask_net"]:
                 if decoder_class == "clean":
