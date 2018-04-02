@@ -4,10 +4,10 @@ Model                   Dev Clean       Test Clean      Dev Dirty       Test Dir
 Baseline clean:         23.5%           24.6%           34.2%           34.9% 
 Baseline dirty:         26.0%           27.4%           29.4%           31.0%
 Enhancement Net:        24.6%           26.0%           29.7%           30.3%
-End2End Phone Net:
-Multitask Net:
+End2End Phone Net:      21.3%           22.7%           33.0%           33.0%
+Multitask Net:          26.7%           28.1%           32.8%           33.8%
 Enhancement MD:         24.8%           25.9%           30.3%           31.1%
-Multitask MD:
+Multitask MD:           27.1%           27.7%           33.2%           34.1%
 
 C_64_128_128_K_5_3_3_P_2_0_2_LATENT_2048_PHONE_FC__2048_2048/BN_false_OPT_Adam_LR_0.001_EPOCHS_35_BATCH_128
 ================================================================================
@@ -15,10 +15,10 @@ Model                   Dev Clean       Test Clean      Dev Dirty       Test Dir
 Baseline clean:         24.4%           25.7%           35.6%           36.3%
 Baseline dirty:         27.1%           28.2%           30.7%           31.1%
 Enhancement Net:        25.2%           26.6%           30.1%           30.9%
-End2End Phone Net:
-Multitask Net:
+End2End Phone Net:      21.4%           22.8%           32.4%           33.5%
+Multitask Net:          28.5%           29.2%           34.7%           35.4%
 Enhancement MD:         25.6%           26.7%           30.4%           31.5%
-Multitask MD:
+Multitask MD:           27.8%           27.9%           33.4%           34.5%
 
 C_64_128_128_K_5_3_3_P_2_0_2_LATENT_512_PHONE_FC__512_512/BN_false_OPT_Adam_LR_0.001_EPOCHS_35_BATCH_128
 ================================================================================
@@ -30,3 +30,14 @@ End2End Phone Net:      21.8%           23.1%           33.1%           33.5%
 Multitask Net:          26.5%           27.1%           32.9%           33.1%
 Enhancement MD:         24.2%           25.8%           29.9%           30.9%
 Multitask MD:           27.1%           26.9%           32.8%           33.4%
+
+C_64_128_128_K_5_3_3_P_2_0_2_LATENT_512_PHONE_FC__512_512/BN_false_OPT_Adam_LR_0.0001_EPOCHS_35_BATCH_128
+================================================================================
+Model                   Dev Clean       Test Clean      Dev Dirty       Test Dirty
+Baseline clean:         20.1%           21.6%           31.5%           32.4%
+Baseline dirty:         22.8%           24.2%           25.2%           26.9%
+Enhancement Net:        20.7%           21.7%           25.4%           27.4%
+End2End Phone Net:      19.9%           21.4%           31.5%           31.6%
+Multitask Net:          21.0%           22.3%           27.5%           28.4%
+Enhancement MD:         20.6%           22.1%           25.8%           27.1%
+Multitask MD:           20.7%           21.8%           27.3%           28.2%
