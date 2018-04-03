@@ -2,7 +2,7 @@ export FEAT_DIM=40      # 40-dim Mel filter bank
 export LEFT_CONTEXT=7
 export RIGHT_CONTEXT=7
 export OPTIMIZER=Adam
-export LEARNING_RATE=0.00001
+export LEARNING_RATE=0.0001
 export EPOCHS=35
 export BATCH_SIZE=128
 
@@ -18,7 +18,7 @@ export CHANNELS_DELIM=$(printf "_%s" "${CHANNELS[@]}")
 export KERNELS_DELIM=$(printf "_%s" "${KERNELS[@]}")
 export DOWNSAMPLES_DELIM=$(printf "_%s" "${DOWNSAMPLES[@]}")
 
-export PHONE_FC=( 512 512 )
+export PHONE_FC=( 512 512 512 )
 export PHONE_FC_DELIM=$(printf "_%s" "${PHONE_FC[@]}")
 
 export CLEAN_RECIPE=${RECIPES}/100_rir_baseline_clean
