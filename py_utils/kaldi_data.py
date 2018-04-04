@@ -1,6 +1,6 @@
 import bisect
 import os
-import random
+from random import shuffle
 import subprocess as sp
 import struct
 
@@ -351,7 +351,13 @@ class KaldiParallelDataset(Dataset):
 
     def shuffle_scp_lines(self):
         # Shuffle SCP lines in place by same ordering
-        self.scp_lines = [list(x) for x in zip(*sorted(zip(self.scp_lines)))][0]
+        shuffled_indices = list(range(len(self.scp_lines[0])))
+        shuffle(shuffled_indices)
+        shuffled_scp_lines = [[] for i in range(len(self.scp_lines))]
+        for i in shuffled_indices:
+            for j in range(len(self.scp_lines)):
+                shuffled_scp_lines[j].append(self.scp_lines[j][i])
+        self.scp_lines = shuffled_scp_lines
 
 
 # Dataset class to support loading parallel features (different domains) from Kaldi files,
@@ -524,4 +530,10 @@ class KaldiParallelPhoneDataset(Dataset):
 
     def shuffle_scp_lines(self):
         # Shuffle SCP lines in place by same ordering
-        self.scp_lines = [list(x) for x in zip(*sorted(zip(self.scp_lines)))][0]
+        shuffled_indices = list(range(len(self.scp_lines[0])))
+        shuffle(shuffled_indices)
+        shuffled_scp_lines = [[] for i in range(len(self.scp_lines))]
+        for i in shuffled_indices:
+            for j in range(len(self.scp_lines)):
+                shuffled_scp_lines[j].append(self.scp_lines[j][i])
+        self.scp_lines = shuffled_scp_lines
