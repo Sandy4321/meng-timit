@@ -34,6 +34,7 @@ export PY_UTILS=$MENG_ROOT/py_utils
 # Change to env-cpu if running just on CPU
 export TRAIN_ENV=env-gpu     
 export AUGMENT_ENV=env-gpu
+export HISTOGRAM_ENV=env-gpu
 export KALDI_ENV=env-kaldi
 
 export PATH=$PATH:$FEATBIN
