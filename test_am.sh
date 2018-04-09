@@ -20,5 +20,5 @@ for model_type in "${model_types[@]}"; do
     train_job_output=$( sbatch models/train_acoustic_model.bash $model_type )
     echo $train_job_output
     train_job_id=$( python3 -c "print(\"$train_job_output\".split(\" \")[-1])" )
-    sbatch --dependency=afterok:$train_job_id models/eval_acoustic_model.bash $model_type
+    sbatch --dependency=afterany:$train_job_id models/eval_acoustic_model.bash $model_type
 done

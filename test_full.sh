@@ -9,7 +9,7 @@
 clean_train_job_output=$( sbatch models/train_acoustic_model.bash clean )
 echo $clean_train_job_output
 clean_train_job_id=$( python3 -c "print(\"$clean_train_job_output\".split(\" \")[-1])" )
-clean_eval_job_output=$( sbatch --dependency=afterok:$clean_train_job_id models/eval_acoustic_model.bash clean )
+clean_eval_job_output=$( sbatch --dependency=afterany:$clean_train_job_id models/eval_acoustic_model.bash clean )
 echo $clean_eval_job_output
 clean_eval_job_id=$( python3 -c "print(\"$clean_eval_job_output\".split(\" \")[-1])" )
 
@@ -17,17 +17,17 @@ clean_eval_job_id=$( python3 -c "print(\"$clean_eval_job_output\".split(\" \")[-
 dirty_train_job_output=$( sbatch models/train_acoustic_model.bash dirty )
 echo $dirty_train_job_output
 dirty_train_job_id=$( python3 -c "print(\"$dirty_train_job_output\".split(\" \")[-1])" )
-sbatch --dependency=afterok:$dirty_train_job_id models/eval_acoustic_model.bash dirty
+sbatch --dependency=afterany:$dirty_train_job_id models/eval_acoustic_model.bash dirty
 
 # Train models that are dependent on the baseline
 model_types=( enhancement_net enhancement_md )
 for model_type in "${model_types[@]}"; do
     # Since sbatch now prints "Submitted batch job <X>", need to get last element in
     # space-delimited array to get the actual Job ID
-    train_job_output=$(sbatch --dependency=afterok:$clean_eval_job_id models/train_${model_type}.bash)
+    train_job_output=$(sbatch --dependency=afterany:$clean_eval_job_id models/train_${model_type}.bash)
     echo $train_job_output
     train_job_id=$( python3 -c "print(\"$train_job_output\".split(\" \")[-1])" )
-    sbatch --dependency=afterok:$train_job_id models/eval_${model_type}.bash
+    sbatch --dependency=afterany:$train_job_id models/eval_${model_type}.bash
 done
 
 # Train models that aren't dependent on the baseline
@@ -38,5 +38,5 @@ for model_type in "${model_types[@]}"; do
     train_job_output=$(sbatch models/train_${model_type}.bash)
     echo $train_job_output
     train_job_id=$( python3 -c "print(\"$train_job_output\".split(\" \")[-1])" )
-    sbatch --dependency=afterok:$train_job_id models/eval_${model_type}.bash
+    sbatch --dependency=afterany:$train_job_id models/eval_${model_type}.bash
 done
