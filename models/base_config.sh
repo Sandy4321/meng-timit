@@ -2,13 +2,13 @@ export FEAT_DIM=40      # 40-dim Mel filter bank
 export LEFT_CONTEXT=7
 export RIGHT_CONTEXT=7
 export OPTIMIZER=Adam
-export LEARNING_RATE=0.0005
+export LEARNING_RATE=0.0001
 export EPOCHS=35
-export BATCH_SIZE=128
+export BATCH_SIZE=256
 
-export CHANNELS=( 128 256 )
-export KERNELS=( 5 3 )        # Assume square kernels (AxA)
-export DOWNSAMPLES=( 2 0 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
+export CHANNELS=( 64 128 128 128 )
+export KERNELS=( 5 3 3 3 )        # Assume square kernels (AxA)
+export DOWNSAMPLES=( 2 0 2 0 )          # Pool only in frequency; no overlap. Use 0 to indicate no pooling
 
 export LATENT_DIM=512
 

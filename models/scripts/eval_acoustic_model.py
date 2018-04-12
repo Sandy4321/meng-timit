@@ -56,6 +56,11 @@ loader = DataLoader(dataset,
                     shuffle=False,
                     **loader_kwargs)
 
+# Load in pdfid log_priors
+with open(os.path.join(os.environ["DIRTY_FEATS"], "log_priors.txt"), 'r') as log_priors_file:
+    log_priors_str = log_priors_file.readline().rstrip('\n').split()
+    log_priors = np.asarray(list(map(float, log_priors_str))).reshape((-1))
+
 # Print out as Hao format data 
 model.eval()
 for batch_idx, (feats, _, utt_ids) in enumerate(loader):
@@ -82,7 +87,8 @@ for batch_idx, (feats, _, utt_ids) in enumerate(loader):
     log_probs = model.classify(spliced_feats_tensor)
     print(utt_id, flush=True)
     for i in range(num_frames):
-        log_probs_str = " ".join(list(map(str, log_probs.cpu().data.numpy()[i, :].reshape((-1)))))
+        posteriors = log_probs.cpu().data.numpy()[i, :].reshape((-1)) - log_priors
+        log_probs_str = " ".join(list(map(str, posteriors)))
         print(log_probs_str, flush=True)
     # Print termination character for Hao format
     print(".", flush=True)
