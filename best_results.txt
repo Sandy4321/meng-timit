@@ -117,10 +117,10 @@ Using pdf priors
 C_64_128_128_128_K_5_3_3_3_P_2_0_2_0_LATENT_512_PHONE_FC__512_512/BN_false_OPT_Adam_LR_0.0001_EPOCHS_35_BATCH_256
 ================================================================================
 Model                   Dev Clean       Test Clean      Dev Dirty       Test Dirty
-Baseline clean:
-Baseline dirty:
-Enhancement Net:
-End2End Phone Net:
-Multitask Net:
-Enhancement MD:
-Multitask MD:
+Baseline clean:         18.7%           20.3%           30.5%           32.5%
+Baseline dirty:         21.1%           23.1%           23.9%           25.9%
+Enhancement Net
+End2End Phone Net:      18.7%           20.1%           32.1%           32.7%
+Multitask Net:          19.5%           20.5%           26.6%           27.9%
+Enhancement MD:         19.7%           21.2%           25.2%           27.4%
+Multitask MD:           19.1%           20.1%           26.6%           27.5%
