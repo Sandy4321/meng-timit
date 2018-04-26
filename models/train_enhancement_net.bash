@@ -7,6 +7,7 @@
 #SBATCH --mem=32768
 #SBATCH --time=24:00:00
 #SBATCH -J train_enhancement_net
+#SBATCH --exclude=sls-sm-[5]
 
 echo "STARTING ENHANCEMENT NET TRAINING JOB"
 

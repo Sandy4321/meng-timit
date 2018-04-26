@@ -1,4 +1,4 @@
-export FEAT_DIM=40      # 40-dim Mel filter bank
+export FEAT_DIM=80      # 80-dim Mel filter bank
 export LEFT_CONTEXT=7
 export RIGHT_CONTEXT=7
 export OPTIMIZER=Adam
@@ -29,7 +29,8 @@ export NUM_PHONES=$(am-info --print-args=false $CLEAN_RECIPE/exp/tri3_ali/final.
 export CLEAN_DATASET=timit_clean
 export CLEAN_FEATS=$FEATS/$CLEAN_DATASET
 
-export DIRTY_DATASET=timit_dirty_100_rir
+# export DIRTY_DATASET=timit_dirty_100_rir
+export DIRTY_DATASET=timit_dirty_600_rir
 export DIRTY_FEATS=$FEATS/$DIRTY_DATASET
 
 export EXPT_NAME="C${CHANNELS_DELIM}_K${KERNELS_DELIM}_P${DOWNSAMPLES_DELIM}_LATENT_${LATENT_DIM}_PHONE_FC_${PHONE_FC_DELIM}/BN_${USE_BATCH_NORM}_OPT_${OPTIMIZER}_LR_${LEARNING_RATE}_EPOCHS_${EPOCHS}_BATCH_${BATCH_SIZE}"

@@ -28,7 +28,7 @@ for model_type in "${model_types[@]}"; do
     echo $train_job_output
     train_job_id=$( python3 -c "print(\"$train_job_output\".split(\" \")[-1])" )
     sbatch --dependency=afterany:$train_job_id models/histogram_${model_type}.bash
-    sbatch --dependency=afterany:$train_job_id:$clean_eval_job_id models/eval_${model_type}.bash
+    sbatch --dependency=afterany:$train_job_id:$clean_train_job_id models/eval_${model_type}.bash
 done
 
 # Train models that aren't dependent on the baseline

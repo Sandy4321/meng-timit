@@ -6,7 +6,7 @@
 #SBATCH --mem=32768
 #SBATCH --gres=gpu:1
 #SBATCH --time=24:00:00
-#SBATCH -J train_enhancement_md
+#SBATCH -J histogram_enhancement_md
 #SBATCH --exclude=sls-sm-[5]
 
 echo "STARTING ENHANCEMENT MULTIDECODER HIDDEN VECTOR HISTOGRAM JOB"

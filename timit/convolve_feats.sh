@@ -35,7 +35,7 @@ for subdir in train dev test; do
     # Convolve features with given RIRs (provided by dataset)
     echo "Convolving features for subdirectory $subdir"
     mkdir -p $current_data/wavs
-    python3 $UTILS/convolve_feats.py recipes/original_kaldi_mfcc/data/$subdir/wav.scp $current_data $current_data/wavs
+    python3 $PY_UTILS/convolve_feats.py recipes/single_rir_baseline_clean/data/$subdir/wav.scp $current_data $current_data/wavs
 
     echo "Done processing $subdir data."
 done

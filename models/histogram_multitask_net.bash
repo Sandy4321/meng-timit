@@ -6,7 +6,7 @@
 #SBATCH --mem=32768
 #SBATCH --gres=gpu:1
 #SBATCH --time=24:00:00
-#SBATCH -J train_multitask_net
+#SBATCH -J histogram_multitask_net
 #SBATCH --exclude=sls-sm-[5]
 
 echo "STARTING MULTITASK NET HIDDEN VECTOR HISTOGRAM JOB"

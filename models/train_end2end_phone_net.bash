@@ -7,6 +7,7 @@
 #SBATCH --mem=32768
 #SBATCH --time=24:00:00
 #SBATCH -J train_end2end_phone_net
+#SBATCH --exclude=sls-sm-[5]
 
 echo "STARTING END-TO-END PHONE NET TRAINING JOB"
 
