@@ -17,7 +17,7 @@ import subprocess as sp
 import numpy as np
 import scipy.io.wavfile as wavfile
 
-debug = False
+debug = True
 if debug:
     print("Running in debug mode (assertion checks; fixed random seed)", flush=True)
     random.seed(1)  # Deterministic for debugging
@@ -98,20 +98,39 @@ with open(os.path.join(data_dir, "wav2rir.txt"), 'w') as wav2rir:
                 # print("Read in %d frames of WAV data (F_s: %d)" % (wav_data_float.shape[0], fs), flush=True)
 
                 # Convolve WAV data with randomly chosen RIR
-                # Perform full convolution and then chop off end effects, so that the output result
-                # is same length as original WAV and is time-aligned to it (still contains edge
-                # effects at beginning, though)
+                # Perform zero-padded convolution
                 rir_idx = random.randint(0, len(rirs) - 1)
                 current_rir = rirs[rir_idx]
-                convolved_wav_float = np.convolve(wav_data_float, current_rir, mode='full')[:len(wav_data_float)]
+                padding = len(current_rir) - 1
+                padded_wav_data_float = np.pad(wav_data_float, padding, 'constant', constant_values=0.0)
+                convolved_wav_float_full = np.convolve(padded_wav_data_float, current_rir, mode='same')
 
-                # Handle clipping
-                clip_factor = 1.1   # Can be hand-tuned; however, must be strictly > 1
-                convolved_wav_float_norm = convolved_wav_float / (max(convolved_wav_float) * clip_factor)
+                # Time-align start of utterance with main peak (i.e. pre-reverb) in RIR, then cut to same sequence length 
+                main_peak_idx = np.argmax(current_rir) 
+                seq_len = len(wav_data_float)
+                start_idx = (padding // 2) + main_peak_idx
+                if debug:
+                    print("Main peak idx %d (start %d), seq len %d, full len %d" % (main_peak_idx,
+                                                                            start_idx,
+                                                                            seq_len,
+                                                                            len(convolved_wav_float_full)))
+                convolved_wav_float = convolved_wav_float_full[start_idx:start_idx + seq_len]
+                if debug:
+                    print("Final len: %d" % len(convolved_wav_float))
+                    assert(len(convolved_wav_float) == seq_len)
+
+                # Normalize based on max volume in original WAV
+                max_vol_original = max(abs(wav_data_float))
+                max_vol_convolved = max(abs(convolved_wav_float))
+                clipping_factor = 0.95      # Tunable; prevents crackling
+                norm_factor = clipping_factor * max_vol_original / max_vol_convolved 
+                if debug:
+                    print("Norm factor: %.3f" % norm_factor)
+                convolved_wav_float_norm = convolved_wav_float * norm_factor
 
                 # Convert back to PCM
                 output_type = np.int16
-                convolved_wav_pcm = floatToPCM(convolved_wav_float, dtype=output_type)
+                convolved_wav_pcm = floatToPCM(convolved_wav_float_norm, dtype=output_type)
 
                 if debug:
                     # Sanity check for clipping
